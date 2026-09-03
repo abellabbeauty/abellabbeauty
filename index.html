@@ -1358,13 +1358,85 @@ function review(){
         <strong>$20 deposit due now</strong>
         <small>Non-refundable. With at least 24 hours’ notice, it can be transferred to a future appointment.</small>
       </div>
-      <button class="btn" id="saveBookingBtn" style="width:100%;margin-top:12px" onclick="saveBooking()">TEST: SAVE BOOKING WITHOUT PAYMENT</button>
+      <button class="btn" id="stripeCheckoutBtn" style="width:100%;margin-top:12px" onclick="startStripeCheckout()">TEST: PAY $20 DEPOSIT WITH STRIPE</button>
       <div class="secure-note">
-        No payment is taken in testing mode. Before launch, this button will become <strong>PAY $20 DEPOSIT & SECURE BOOKING</strong> and Stripe will confirm the payment before the appointment is secured.
+        Stripe is still in <strong>Sandbox</strong>, so no real money will be charged. This test opens Stripe Checkout. The appointment will not be secured until we add Stripe payment confirmation in the next step.
       </div>
     </div>
   </div>`;
 }
+
+async function startStripeCheckout(){
+  const c=calc();
+  const btn=document.getElementById("stripeCheckoutBtn");
+
+  if(!state.service||!state.date||!state.time){
+    alert("Please choose your service, date and time first.");
+    return;
+  }
+
+  const clientName=document.getElementById("name").value.trim();
+  const clientEmail=document.getElementById("email").value.trim();
+  const clientPhone=document.getElementById("phone").value.trim();
+  const notes=document.getElementById("notes").value.trim();
+
+  if(!clientName||!clientEmail||!clientPhone){
+    alert("Please complete your name, email and phone number.");
+    return;
+  }
+
+  const startAt=sydneyLocalToISO(state.date,state.time);
+  const endAt=new Date(new Date(startAt).getTime()+(c.time*60*1000)).toISOString();
+
+  const originalText=btn?btn.textContent:"";
+  if(btn){
+    btn.disabled=true;
+    btn.textContent="OPENING STRIPE…";
+  }
+
+  try{
+    const response=await fetch(`${SUPABASE_URL}/functions/v1/create-checkout-session`,{
+      method:"POST",
+      headers:{
+        "apikey":SUPABASE_PUBLISHABLE_KEY,
+        "Authorization":`Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify({
+        client_name:clientName,
+        client_email:clientEmail,
+        client_phone:clientPhone,
+        service_name:c.service,
+        start_at:startAt,
+        end_at:endAt,
+        total_price:c.price,
+        notes:notes||""
+      })
+    });
+
+    const text=await response.text();
+    let data=null;
+    try{data=JSON.parse(text)}catch{data={error:text}}
+
+    if(!response.ok){
+      throw new Error(data?.error||data?.message||"Could not start Stripe Checkout.");
+    }
+
+    if(!data?.url){
+      throw new Error("Stripe did not return a Checkout URL.");
+    }
+
+    window.location.href=data.url;
+
+  }catch(err){
+    alert(err.message||"Could not open Stripe Checkout.");
+    if(btn){
+      btn.disabled=false;
+      btn.textContent=originalText;
+    }
+  }
+}
+
 async function saveBooking(){
   const c=calc();
   const btn=document.getElementById("saveBookingBtn");
