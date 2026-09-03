@@ -49,15 +49,15 @@ main{width:min(1180px,calc(100% - 16px));margin:14px auto 40px}
 .slotBody{position:relative;border-left:1px solid var(--line);min-height:var(--slot)}
 .slotBody::after{content:"";position:absolute;left:0;right:0;top:50%;border-top:1px dashed #f5ecee}
 
-.weekWrap{overflow-x:auto}
+.weekWrap{overflow-x:auto;-webkit-overflow-scrolling:touch;position:relative}
 .weekDiary{min-width:980px;background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden}
-.weekHeader{display:grid;grid-template-columns:70px repeat(7,1fr);position:sticky;top:74px;background:#fffdfa;z-index:10;border-bottom:1px solid var(--line)}
+.weekHeader{display:grid;grid-template-columns:70px repeat(7,1fr);position:sticky;top:74px;background:#fffdfa;z-index:12;border-bottom:1px solid var(--line)}
 .weekHeader div{padding:10px 6px;text-align:center;border-left:1px solid var(--line)}
-.weekHeader div:first-child{border-left:0}
+.weekHeader div:first-child{border-left:0;position:sticky;left:0;z-index:15;background:#fffdfa;box-shadow:1px 0 0 var(--line)}
 .weekHeader strong{display:block;font-size:.75rem;text-transform:uppercase;color:var(--muted)}
 .weekHeader span{font:400 1.1rem Georgia,"Times New Roman",serif}
 .weekGrid{position:relative;display:grid;grid-template-columns:70px repeat(7,1fr)}
-.weekTimeCol{position:relative;border-right:1px solid var(--line)}
+.weekTimeCol{position:sticky;left:0;z-index:9;border-right:1px solid var(--line);background:#fffdfa;box-shadow:1px 0 0 var(--line)}
 .weekTime{height:64px;border-bottom:1px solid #f2e8ea;padding:8px 6px;text-align:right;font-size:.7rem;color:var(--muted)}
 .weekDayCol{position:relative;border-right:1px solid var(--line);height:1536px;background:#fff}
 .weekDayCol:last-child{border-right:0}
@@ -131,6 +131,23 @@ main{width:min(1180px,calc(100% - 16px));margin:14px auto 40px}
   .contactGrid{grid-template-columns:1fr}
 }
 
+
+.weekBooking{border-width:1.5px!important}
+.weekBooking.pending{background:#fff8e9;border-color:#efd39d}
+.weekBooking.confirmed{background:#edf9f3;border-color:#a8d8be}
+.weekBooking.cancelled{background:#fff1f3;border-color:#e8b8c1;opacity:.72}
+.weekBooking.completed{background:#f3eff9;border-color:#cfc2e3}
+.weekBooking.pending strong{color:#8a5a0a}
+.weekBooking.confirmed strong{color:#246746}
+.weekBooking.cancelled strong{color:#a23d4f}
+.weekBooking.completed strong{color:#66508a}
+.weekBooking::after{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:10px 0 0 10px;background:var(--pink)}
+.weekBooking.pending::after{background:#e5b85d}
+.weekBooking.confirmed::after{background:#64ad84}
+.weekBooking.cancelled::after{background:#d66b7d}
+.weekBooking.completed::after{background:#9681bd}
+.weekSwipeHint{font-size:.72rem;color:var(--muted);text-align:center;margin:0 0 9px}
+
 </style>
 </head>
 <body>
@@ -181,7 +198,7 @@ main{width:min(1180px,calc(100% - 16px));margin:14px auto 40px}
       <div id="timeline" class="timeline"></div>
     </div>
 
-    <div id="weekView" class="weekWrap hidden">
+    <div id="weekView" class="weekWrap hidden"><div class="weekSwipeHint">Times stay fixed — swipe sideways to see the rest of the week.</div>
       <div class="weekDiary">
         <div id="weekHeader" class="weekHeader"></div>
         <div id="weekGrid" class="weekGrid"></div>
@@ -348,7 +365,7 @@ function renderWeekView(){
     });
     bookings.filter(b=>bookingDateKey(b.start_at)===key).forEach(b=>{
       const start=bookingMinutes(b.start_at),end=bookingMinutes(b.end_at);if(end<=DAY_START||start>=DAY_END)return;
-      const card=document.createElement("button");card.className="weekBooking";
+      const card=document.createElement("button");card.className=`weekBooking ${b.booking_status||"pending"}`;
       card.style.top=`${((start-DAY_START)/SLOT_MIN)*SLOT_PX+4}px`;card.style.height=`${Math.max(42,((end-start)/SLOT_MIN)*SLOT_PX-8)}px`;
       card.innerHTML=`<strong>${bookingTime(b.start_at)}<br>${esc(b.client_name)}</strong><small>${esc(b.service_name)}</small>`;
       card.onclick=(e)=>{e.stopPropagation();openBooking(b.id)};col.appendChild(card);
