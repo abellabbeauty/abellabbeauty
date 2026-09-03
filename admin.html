@@ -28,6 +28,9 @@ main{width:min(1180px,calc(100% - 16px));margin:14px auto 40px}
 .headerRow h1{font:400 2rem Georgia,"Times New Roman",serif;margin:0}
 .weekControls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .weekLabel{font-weight:800;font-size:.95rem;min-width:150px;text-align:center}
+.viewToggle{display:inline-flex;border:1px solid var(--line);border-radius:12px;padding:3px;background:#fff}
+.viewToggle button{border:0;background:transparent;padding:8px 13px;border-radius:9px;font-weight:800;color:var(--muted)}
+.viewToggle button.active{background:var(--pink2);color:var(--deep)}
 .dayTabs{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;margin:8px 0 14px}
 .dayTab{border:1px solid var(--line);background:#fff;border-radius:14px;padding:9px 4px;text-align:center;color:var(--muted)}
 .dayTab strong{display:block;font-size:.75rem;text-transform:uppercase}
@@ -45,6 +48,27 @@ main{width:min(1180px,calc(100% - 16px));margin:14px auto 40px}
 .timeLabel{padding:8px 8px 0 10px;font-size:.75rem;color:var(--muted);text-align:right}
 .slotBody{position:relative;border-left:1px solid var(--line);min-height:var(--slot)}
 .slotBody::after{content:"";position:absolute;left:0;right:0;top:50%;border-top:1px dashed #f5ecee}
+
+.weekWrap{overflow-x:auto}
+.weekDiary{min-width:980px;background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.weekHeader{display:grid;grid-template-columns:70px repeat(7,1fr);position:sticky;top:74px;background:#fffdfa;z-index:10;border-bottom:1px solid var(--line)}
+.weekHeader div{padding:10px 6px;text-align:center;border-left:1px solid var(--line)}
+.weekHeader div:first-child{border-left:0}
+.weekHeader strong{display:block;font-size:.75rem;text-transform:uppercase;color:var(--muted)}
+.weekHeader span{font:400 1.1rem Georgia,"Times New Roman",serif}
+.weekGrid{position:relative;display:grid;grid-template-columns:70px repeat(7,1fr)}
+.weekTimeCol{position:relative;border-right:1px solid var(--line)}
+.weekTime{height:64px;border-bottom:1px solid #f2e8ea;padding:8px 6px;text-align:right;font-size:.7rem;color:var(--muted)}
+.weekDayCol{position:relative;border-right:1px solid var(--line);height:1536px;background:#fff}
+.weekDayCol:last-child{border-right:0}
+.weekDayCol::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(to bottom,transparent 0,transparent 63px,#f2e8ea 64px)}
+.weekBooking{position:absolute;left:4px;right:4px;border:1px solid #efc9d0;background:#fff6f7;border-radius:10px;padding:5px 6px;z-index:4;overflow:hidden;box-shadow:0 2px 8px rgba(93,45,53,.05)}
+.weekBooking strong{display:block;font-size:.72rem;color:var(--deep);line-height:1.15}
+.weekBooking small{display:block;font-size:.66rem;color:var(--muted);margin-top:2px}
+.weekOverride{position:absolute;left:3px;right:3px;border-radius:7px;z-index:2;padding:2px 4px;font-size:.6rem;font-weight:800;overflow:hidden}
+.weekOverride.open{background:#eaf8f0;color:var(--green);border:1px dashed #9fd1b4}
+.weekOverride.closed{background:#fff0f2;color:var(--red);border:1px dashed #e4b3bd}
+
 .booking{position:absolute;left:8px;right:8px;border:1px solid #efc9d0;background:#fff6f7;border-radius:12px;padding:8px 10px;z-index:3;box-shadow:0 3px 10px rgba(93,45,53,.06);overflow:hidden}
 .booking strong{display:block;font-size:.82rem;color:var(--deep)} .booking small{display:block;font-size:.74rem;color:var(--muted);margin-top:2px}
 .badge{display:inline-block;border-radius:999px;padding:3px 7px;font-size:.62rem;font-weight:800;margin-top:5px}
@@ -68,21 +92,21 @@ main{width:min(1180px,calc(100% - 16px));margin:14px auto 40px}
 .dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px}
 
 @media(max-width:700px){
-  .topbar{padding:12px}
-  .brand{font-size:1.45rem}
-  main{width:calc(100% - 12px)}
+  .topbar{padding:12px} .brand{font-size:1.45rem} main{width:calc(100% - 12px)}
   .headerRow{align-items:flex-start;flex-direction:column}
   .headerRow h1{font-size:1.65rem}
   .weekControls{width:100%;justify-content:space-between}
   .weekLabel{min-width:auto;flex:1}
+  .viewToggle{align-self:stretch}
+  .viewToggle button{flex:1}
   .dayTabs{gap:5px}
   .dayTab{padding:8px 2px;border-radius:12px}
   .dayTab strong{font-size:.62rem}
   .dayTab span{font-size:1.15rem}
   .slot{grid-template-columns:58px 1fr}
   .timeLabel{font-size:.68rem;padding-right:6px}
-  .panel{padding:16px}
-  .detail{grid-template-columns:1fr}
+  .panel{padding:16px} .detail{grid-template-columns:1fr}
+  .weekHeader{top:68px}
 }
 </style>
 </head>
@@ -102,7 +126,13 @@ main{width:min(1180px,calc(100% - 16px));margin:14px auto 40px}
   <div class="topbar"><div class="brand">abellabbeauty admin</div><button class="signout" onclick="logout()">Sign out</button></div>
   <main>
     <div class="headerRow">
-      <h1>Appointment diary</h1>
+      <div>
+        <h1>Appointment diary</h1>
+        <div class="viewToggle" style="margin-top:8px">
+          <button id="dayBtn" class="active" onclick="setView('day')">DAY</button>
+          <button id="weekBtn" onclick="setView('week')">WEEK</button>
+        </div>
+      </div>
       <div class="weekControls">
         <button class="btn secondary small" onclick="shiftWeek(-7)">←</button>
         <button class="btn secondary small" onclick="goToday()">Today</button>
@@ -120,12 +150,19 @@ main{width:min(1180px,calc(100% - 16px));margin:14px auto 40px}
       <span><span class="dot" style="background:#fff0f2"></span>Closed/block</span>
     </div>
 
-    <div class="diaryCard">
+    <div id="dayView" class="diaryCard">
       <div class="diaryHead">
         <div><div id="selectedDayTitle" class="diaryHeadTitle"></div><div id="selectedDaySub" class="diaryHeadSub"></div></div>
         <button class="addBtn" onclick="openDay(selectedDateKey)">+ Availability</button>
       </div>
       <div id="timeline" class="timeline"></div>
+    </div>
+
+    <div id="weekView" class="weekWrap hidden">
+      <div class="weekDiary">
+        <div id="weekHeader" class="weekHeader"></div>
+        <div id="weekGrid" class="weekGrid"></div>
+      </div>
     </div>
   </main>
 </div>
@@ -138,11 +175,9 @@ const SUPABASE_KEY="sb_publishable_u5HE_sMnuD6LUEsj-HkJeA_LLLFxk5A";
 let accessToken=sessionStorage.getItem("abella_admin_token")||"";
 let weekStart=startOfWeek(new Date());
 let selectedDateKey=dkey(new Date());
+let currentView="day";
 let bookings=[],overrides=[];
-const DAY_START=480;  // 8:00 am
-const DAY_END=1200;   // 8:00 pm
-const SLOT_MIN=30;
-const SLOT_PX=64;
+const DAY_START=480,DAY_END=1200,SLOT_MIN=30,SLOT_PX=64;
 
 function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
 function dkey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`}
@@ -182,7 +217,7 @@ async function login(){
   e.classList.add("hidden");
   try{
     const data=await api("/auth/v1/token?grant_type=password",{method:"POST",body:JSON.stringify({email,password})});
-    accessToken=data.access_token; sessionStorage.setItem("abella_admin_token",accessToken); await showApp();
+    accessToken=data.access_token;sessionStorage.setItem("abella_admin_token",accessToken);await showApp();
   }catch(err){e.textContent=err.message;e.classList.remove("hidden")}
 }
 function logout(){sessionStorage.removeItem("abella_admin_token");accessToken="";location.reload()}
@@ -199,10 +234,18 @@ async function loadWeek(){
   }catch(err){if(/jwt|token|auth/i.test(err.message))return logout();alert("Could not load calendar: "+err.message)}
 }
 
+function setView(v){
+  currentView=v;
+  document.getElementById("dayBtn").classList.toggle("active",v==="day");
+  document.getElementById("weekBtn").classList.toggle("active",v==="week");
+  document.getElementById("dayView").classList.toggle("hidden",v!=="day");
+  document.getElementById("weekView").classList.toggle("hidden",v!=="week");
+  document.getElementById("dayTabs").classList.toggle("hidden",v!=="day");
+  if(v==="week")renderWeekView();
+}
 function renderAll(){
   document.getElementById("weekLabel").textContent=`${fmtMonthDay(weekStart)} – ${fmtMonthDay(addDays(weekStart,6))}`;
-  renderDayTabs();
-  renderTimeline();
+  renderDayTabs();renderTimeline();if(currentView==="week")renderWeekView();
 }
 function renderDayTabs(){
   const wrap=document.getElementById("dayTabs");wrap.innerHTML="";
@@ -220,8 +263,7 @@ function renderTimeline(){
   document.getElementById("selectedDayTitle").textContent=dateObj.toLocaleDateString("en-AU",{weekday:"long",day:"numeric",month:"long"});
   const dayBookings=bookings.filter(b=>bookingDateKey(b.start_at)===selectedDateKey);
   document.getElementById("selectedDaySub").textContent=dayBookings.length?`${dayBookings.length} appointment${dayBookings.length===1?"":"s"}`:"No appointments";
-
-  const timeline=document.getElementById("timeline"); timeline.innerHTML="";
+  const timeline=document.getElementById("timeline");timeline.innerHTML="";
   const slotCount=(DAY_END-DAY_START)/SLOT_MIN;
   for(let i=0;i<slotCount;i++){
     const mins=DAY_START+i*SLOT_MIN,slot=document.createElement("div");
@@ -229,32 +271,66 @@ function renderTimeline(){
     slot.innerHTML=`<div class="timeLabel">${minsLabel(mins)}</div><div class="slotBody" onclick="quickAdd('${selectedDateKey}','${String(Math.floor(mins/60)).padStart(2,"0")}:${String(mins%60).padStart(2,"0")}')"></div>`;
     timeline.appendChild(slot);
   }
-
   const bodyLeft=72;
   for(const o of overrides.filter(x=>selectedDateKey>=bookingDateKey(x.start_at)&&selectedDateKey<=bookingDateKey(new Date(new Date(x.end_at).getTime()-1).toISOString()))){
     const start=Math.max(DAY_START,bookingMinutes(o.start_at)),end=Math.min(DAY_END,bookingMinutes(o.end_at));
     if(end<=DAY_START||start>=DAY_END)continue;
     const band=document.createElement("div");
     band.className=`overrideBand ${o.override_type}`;
-    band.style.left=`${bodyLeft+4}px`;
-    band.style.top=`${((start-DAY_START)/SLOT_MIN)*SLOT_PX+2}px`;
-    band.style.height=`${Math.max(22,((end-start)/SLOT_MIN)*SLOT_PX-4)}px`;
+    band.style.left=`${bodyLeft+4}px`;band.style.top=`${((start-DAY_START)/SLOT_MIN)*SLOT_PX+2}px`;band.style.height=`${Math.max(22,((end-start)/SLOT_MIN)*SLOT_PX-4)}px`;
     band.textContent=`${o.override_type==="open"?"OPEN":"CLOSED"} · ${bookingTime(o.start_at)}–${bookingTime(o.end_at)}`;
-    band.onclick=(e)=>{e.stopPropagation();openDay(selectedDateKey)};
-    timeline.appendChild(band);
+    band.onclick=(e)=>{e.stopPropagation();openDay(selectedDateKey)};timeline.appendChild(band);
   }
-
   for(const b of dayBookings){
-    const start=bookingMinutes(b.start_at),end=bookingMinutes(b.end_at);
-    if(end<=DAY_START||start>=DAY_END)continue;
-    const card=document.createElement("button");
-    card.className="booking";
-    card.style.left=`${bodyLeft+8}px`;
-    card.style.top=`${((start-DAY_START)/SLOT_MIN)*SLOT_PX+4}px`;
-    card.style.height=`${Math.max(52,((end-start)/SLOT_MIN)*SLOT_PX-8)}px`;
+    const start=bookingMinutes(b.start_at),end=bookingMinutes(b.end_at);if(end<=DAY_START||start>=DAY_END)continue;
+    const card=document.createElement("button");card.className="booking";
+    card.style.left=`${bodyLeft+8}px`;card.style.top=`${((start-DAY_START)/SLOT_MIN)*SLOT_PX+4}px`;card.style.height=`${Math.max(52,((end-start)/SLOT_MIN)*SLOT_PX-8)}px`;
     card.onclick=()=>openBooking(b.id);
     card.innerHTML=`<strong>${bookingTime(b.start_at)} · ${esc(b.client_name)}</strong><small>${esc(b.service_name)}</small><span class="badge ${esc(b.booking_status)}">${esc(b.booking_status)}</span>`;
     timeline.appendChild(card);
+  }
+}
+
+function renderWeekView(){
+  const header=document.getElementById("weekHeader");header.innerHTML="<div></div>";
+  for(let i=0;i<7;i++){
+    const d=addDays(weekStart,i);
+    const cell=document.createElement("div");
+    cell.innerHTML=`<strong>${d.toLocaleDateString("en-AU",{weekday:"short"})}</strong><span>${d.getDate()} ${d.toLocaleDateString("en-AU",{month:"short"})}</span>`;
+    header.appendChild(cell);
+  }
+  const grid=document.getElementById("weekGrid");grid.innerHTML="";
+  const timeCol=document.createElement("div");timeCol.className="weekTimeCol";
+  for(let mins=DAY_START;mins<DAY_END;mins+=SLOT_MIN){
+    const t=document.createElement("div");t.className="weekTime";t.textContent=minsLabel(mins);timeCol.appendChild(t);
+  }
+  grid.appendChild(timeCol);
+
+  for(let i=0;i<7;i++){
+    const d=addDays(weekStart,i),key=dkey(d),col=document.createElement("div");col.className="weekDayCol";
+    col.onclick=(e)=>{
+      if(e.target!==col)return;
+      const rect=col.getBoundingClientRect();
+      const y=e.clientY-rect.top;
+      const mins=Math.max(DAY_START,Math.min(DAY_END-30,DAY_START+Math.round((y/SLOT_PX)*SLOT_MIN/30)*30));
+      selectedDateKey=key;openDay(key,`${String(Math.floor(mins/60)).padStart(2,"0")}:${String(mins%60).padStart(2,"0")}`);
+    };
+    const ovs=overrides.filter(o=>key>=bookingDateKey(o.start_at)&&key<=bookingDateKey(new Date(new Date(o.end_at).getTime()-1).toISOString()));
+    ovs.forEach(o=>{
+      const start=Math.max(DAY_START,bookingMinutes(o.start_at)),end=Math.min(DAY_END,bookingMinutes(o.end_at));if(end<=DAY_START||start>=DAY_END)return;
+      const band=document.createElement("div");band.className=`weekOverride ${o.override_type}`;
+      band.style.top=`${((start-DAY_START)/SLOT_MIN)*SLOT_PX+2}px`;band.style.height=`${Math.max(18,((end-start)/SLOT_MIN)*SLOT_PX-4)}px`;
+      band.textContent=o.override_type==="open"?"OPEN":"CLOSED";
+      band.onclick=(e)=>{e.stopPropagation();selectedDateKey=key;openDay(key)};col.appendChild(band);
+    });
+    bookings.filter(b=>bookingDateKey(b.start_at)===key).forEach(b=>{
+      const start=bookingMinutes(b.start_at),end=bookingMinutes(b.end_at);if(end<=DAY_START||start>=DAY_END)return;
+      const card=document.createElement("button");card.className="weekBooking";
+      card.style.top=`${((start-DAY_START)/SLOT_MIN)*SLOT_PX+4}px`;card.style.height=`${Math.max(42,((end-start)/SLOT_MIN)*SLOT_PX-8)}px`;
+      card.innerHTML=`<strong>${bookingTime(b.start_at)}<br>${esc(b.client_name)}</strong><small>${esc(b.service_name)}</small>`;
+      card.onclick=(e)=>{e.stopPropagation();openBooking(b.id)};col.appendChild(card);
+    });
+    grid.appendChild(col);
   }
 }
 function shiftWeek(n){weekStart=addDays(weekStart,n);selectedDateKey=dkey(weekStart);loadWeek()}
@@ -263,14 +339,11 @@ function goToday(){weekStart=startOfWeek(new Date());selectedDateKey=dkey(new Da
 function openDrawer(content){document.getElementById("panel").innerHTML=content;document.getElementById("drawer").classList.remove("hidden")}
 function closeDrawer(){document.getElementById("drawer").classList.add("hidden")}
 function drawerBackdrop(e){if(e.target.id==="drawer")closeDrawer()}
-
-function quickAdd(dateKey,time24){
-  openDay(dateKey,time24);
-}
+function quickAdd(dateKey,time24){openDay(dateKey,time24)}
 function openDay(dateKey,prefill="09:00"){
   const [y,m,d]=dateKey.split("-").map(Number),dateObj=new Date(y,m-1,d);
   const existing=overrides.filter(o=>dateKey>=bookingDateKey(o.start_at)&&dateKey<=bookingDateKey(new Date(new Date(o.end_at).getTime()-1).toISOString()));
-  const [hh,mm]=prefill.split(":").map(Number); const endMin=Math.min(hh*60+mm+60,23*60+45); const end24=`${String(Math.floor(endMin/60)).padStart(2,"0")}:${String(endMin%60).padStart(2,"0")}`;
+  const [hh,mm]=prefill.split(":").map(Number),endMin=Math.min(hh*60+mm+60,23*60+45),end24=`${String(Math.floor(endMin/60)).padStart(2,"0")}:${String(endMin%60).padStart(2,"0")}`;
   openDrawer(`
     <div class="panelhead"><h2>${esc(dateObj.toLocaleDateString("en-AU",{weekday:"long",day:"numeric",month:"long"}))}</h2><button class="x" onclick="closeDrawer()">×</button></div>
     <div class="sectiontitle">Open extra availability</div>
@@ -278,13 +351,11 @@ function openDay(dateKey,prefill="09:00"){
     <div class="field"><label>Finish</label><input id="openEnd" type="time" value="${end24}" step="900"></div>
     <div class="field"><label>Note</label><input id="openNote" placeholder="Extra hours / extra day"></div>
     <button class="btn" onclick="saveOverride('${dateKey}','open')">OPEN THIS TIME</button>
-
     <div class="sectiontitle">Close / block time</div>
     <div class="field"><label>Start</label><input id="closeStart" type="time" value="${prefill}" step="900"></div>
     <div class="field"><label>Finish</label><input id="closeEnd" type="time" value="${end24}" step="900"></div>
     <div class="field"><label>Reason</label><input id="closeNote" placeholder="Lunch / appointment / day off"></div>
     <div class="actions"><button class="btn secondary" onclick="saveOverride('${dateKey}','closed')">BLOCK THIS TIME</button><button class="btn danger" onclick="closeWholeDay('${dateKey}')">CLOSE WHOLE DAY</button></div>
-
     <div class="sectiontitle">Existing overrides</div>
     ${existing.length?existing.map(o=>`<div class="notice" style="margin-bottom:8px"><strong>${o.override_type==="open"?"OPEN":"CLOSED"}</strong><br>${bookingTime(o.start_at)}–${bookingTime(o.end_at)}${o.note?` · ${esc(o.note)}`:""}<br><button class="btn danger small" style="margin-top:8px" onclick="deleteOverride('${o.id}')">Remove</button></div>`).join(""):'<div class="notice">No overrides for this day.</div>'}
   `);
@@ -324,7 +395,6 @@ function openBooking(id){
   `);
 }
 async function updateBooking(id,patch){try{await api(`/rest/v1/bookings?id=eq.${id}`,{method:"PATCH",headers:{Prefer:"return=minimal"},body:JSON.stringify(patch)});closeDrawer();await loadWeek()}catch(err){alert(err.message)}}
-
 if(accessToken)showApp();
 </script>
 </body>
