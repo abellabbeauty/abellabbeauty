@@ -108,6 +108,29 @@ main{width:min(1180px,calc(100% - 16px));margin:14px auto 40px}
   .panel{padding:16px} .detail{grid-template-columns:1fr}
   .weekHeader{top:68px}
 }
+
+.bookingHero{background:linear-gradient(180deg,#fff7f8,#fff);border:1px solid var(--line);border-radius:16px;padding:16px;margin:12px 0}
+.bookingHero .clientName{font:400 1.55rem Georgia,"Times New Roman",serif;margin:0 0 4px}
+.bookingHero .serviceLine{color:var(--muted);font-size:.9rem}
+.summaryStrip{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}
+.summaryStrip>div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px;text-align:center}
+.summaryStrip span{display:block;color:var(--muted);font-size:.68rem}
+.summaryStrip strong{display:block;margin-top:3px;font-size:.95rem}
+.contactGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.contactGrid>div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px}
+.contactGrid span{display:block;color:var(--muted);font-size:.7rem}
+.contactGrid strong{display:block;margin-top:3px;word-break:break-word}
+.compactCard{background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px;margin:9px 0}
+.compactCard h3{margin:0 0 6px;font-size:.8rem}
+.compactCard p{margin:0;color:var(--muted);font-size:.84rem;line-height:1.45}
+.stickyActions{position:sticky;bottom:-20px;margin:18px -20px -20px;padding:12px 20px calc(12px + env(safe-area-inset-bottom));background:rgba(255,250,247,.97);backdrop-filter:blur(10px);border-top:1px solid var(--line);z-index:5}
+.stickyActions .actions{margin:0}
+.statusPill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:6px 9px;font-size:.72rem;font-weight:800}
+@media(max-width:700px){
+  .summaryStrip{grid-template-columns:1fr 1fr 1fr}
+  .contactGrid{grid-template-columns:1fr}
+}
+
 </style>
 </head>
 <body>
@@ -373,25 +396,72 @@ async function deleteOverride(id){if(!confirm("Remove this availability override
 
 function openBooking(id){
   const b=bookings.find(x=>x.id===id);if(!b)return;
-  const details=b.service_details||{},addOns=Array.isArray(details.addons)?details.addons.map(a=>`${esc(a.name)}${a.quantity?` ×${a.quantity}`:""}`).join(", "):"—";
+  const details=b.service_details||{};
+  const addOns=Array.isArray(details.addons)
+    ? details.addons.map(a=>`${esc(a.name)}${a.quantity?` ×${a.quantity}`:""}`).join(", ")
+    : "";
+  const total=Number(b.total_price||0);
+  const deposit=Number(b.deposit_amount||20);
+  const remaining=Math.max(0,total-deposit);
+  const statusClass=esc(b.booking_status||"pending");
+  const paymentLabel=(b.payment_status==="paid")?"Deposit paid":(b.payment_status==="refunded"?"Deposit refunded":"Deposit unpaid");
+
   openDrawer(`
-    <div class="panelhead"><h2>${esc(b.client_name)}</h2><button class="x" onclick="closeDrawer()">×</button></div>
-    <div class="detail">
-      <div><span>Date</span><strong>${esc(new Date(b.start_at).toLocaleDateString("en-AU",{timeZone:"Australia/Sydney",weekday:"long",day:"numeric",month:"long"}))}</strong></div>
-      <div><span>Time</span><strong>${bookingTime(b.start_at)}–${bookingTime(b.end_at)}</strong></div>
-      <div><span>Service</span><strong>${esc(b.service_name)}</strong></div>
-      <div><span>Total</span><strong>${Number(b.total_price).toLocaleString("en-AU",{style:"currency",currency:"AUD"})}</strong></div>
-      <div><span>Deposit</span><strong>${esc(b.payment_status)} · $${Number(b.deposit_amount).toFixed(0)}</strong></div>
-      <div><span>Status</span><strong>${esc(b.booking_status)}</strong></div>
+    <div class="panelhead">
+      <div>
+        <h2>Appointment</h2>
+        <div class="muted" style="font-size:.78rem">${esc(new Date(b.start_at).toLocaleDateString("en-AU",{timeZone:"Australia/Sydney",weekday:"long",day:"numeric",month:"long"}))}</div>
+      </div>
+      <button class="x" onclick="closeDrawer()">×</button>
+    </div>
+
+    <div class="bookingHero">
+      <div class="clientName">${esc(b.client_name)}</div>
+      <div class="serviceLine">${esc(b.service_name)} · ${bookingTime(b.start_at)}–${bookingTime(b.end_at)}</div>
+      <div style="margin-top:9px">
+        <span class="statusPill ${statusClass}">${esc(b.booking_status)}</span>
+      </div>
+    </div>
+
+    <div class="summaryStrip">
+      <div><span>Total</span><strong>${total.toLocaleString("en-AU",{style:"currency",currency:"AUD"})}</strong></div>
+      <div><span>Deposit</span><strong>${deposit.toLocaleString("en-AU",{style:"currency",currency:"AUD"})}</strong></div>
+      <div><span>Remaining</span><strong>${remaining.toLocaleString("en-AU",{style:"currency",currency:"AUD"})}</strong></div>
+    </div>
+
+    <div class="compactCard">
+      <h3>Payment</h3>
+      <p><strong style="color:var(--ink)">${esc(paymentLabel)}</strong>${b.payment_status==="unpaid"?" · testing mode":""}</p>
+    </div>
+
+    <div class="contactGrid">
       <div><span>Email</span><strong>${esc(b.client_email)}</strong></div>
       <div><span>Phone</span><strong>${esc(b.client_phone)}</strong></div>
     </div>
-    <div class="notice"><strong>Add-ons</strong><br>${addOns}</div>
-    ${b.notes?`<div class="notice" style="margin-top:10px"><strong>Notes</strong><br>${esc(b.notes)}</div>`:""}
+
+    ${addOns?`<div class="compactCard"><h3>Add-ons</h3><p>${addOns}</p></div>`:""}
+    ${b.notes?`<div class="compactCard"><h3>Notes</h3><p>${esc(b.notes)}</p></div>`:""}
+
     <div class="sectiontitle">Booking status</div>
-    <div class="actions"><button class="btn small" onclick="updateBooking('${b.id}',{booking_status:'confirmed'})">Confirm</button><button class="btn secondary small" onclick="updateBooking('${b.id}',{booking_status:'completed'})">Complete</button><button class="btn danger small" onclick="updateBooking('${b.id}',{booking_status:'cancelled'})">Cancel</button></div>
+    <div class="actions">
+      <button class="btn small" onclick="updateBooking('${b.id}',{booking_status:'confirmed'})">Confirm</button>
+      <button class="btn secondary small" onclick="updateBooking('${b.id}',{booking_status:'completed'})">Complete</button>
+      <button class="btn danger small" onclick="updateBooking('${b.id}',{booking_status:'cancelled'})">Cancel</button>
+    </div>
+
     <div class="sectiontitle">Deposit status</div>
-    <div class="actions"><button class="btn small" onclick="updateBooking('${b.id}',{payment_status:'paid'})">Mark paid</button><button class="btn secondary small" onclick="updateBooking('${b.id}',{payment_status:'unpaid'})">Mark unpaid</button><button class="btn danger small" onclick="updateBooking('${b.id}',{payment_status:'refunded'})">Refunded</button></div>
+    <div class="actions">
+      <button class="btn small" onclick="updateBooking('${b.id}',{payment_status:'paid'})">Mark paid</button>
+      <button class="btn secondary small" onclick="updateBooking('${b.id}',{payment_status:'unpaid'})">Mark unpaid</button>
+      <button class="btn danger small" onclick="updateBooking('${b.id}',{payment_status:'refunded'})">Refunded</button>
+    </div>
+
+    <div class="stickyActions">
+      <div class="actions">
+        <button class="btn" onclick="updateBooking('${b.id}',{booking_status:'confirmed'})">CONFIRM BOOKING</button>
+        <button class="btn danger" onclick="updateBooking('${b.id}',{booking_status:'cancelled'})">CANCEL</button>
+      </div>
+    </div>
   `);
 }
 async function updateBooking(id,patch){try{await api(`/rest/v1/bookings?id=eq.${id}`,{method:"PATCH",headers:{Prefer:"return=minimal"},body:JSON.stringify(patch)});closeDrawer();await loadWeek()}catch(err){alert(err.message)}}
