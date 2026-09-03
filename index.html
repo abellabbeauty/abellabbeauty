@@ -853,6 +853,70 @@ function ctime(min){
   h=h%12||12;
   return `${h}:${String(m).padStart(2,"0")} ${ap}`;
 }
+
+function defaultWindowsForDate(d){
+  if(d.getDay()===1)return[{start:540,end:1020}];
+  if(d.getDay()===4)return[{start:540,end:915}];
+  return[];
+}
+function localMinutesFromISO(iso){
+  const dt=new Date(iso);
+  const parts=new Intl.DateTimeFormat("en-AU",{
+    timeZone:"Australia/Sydney",
+    hour:"2-digit",minute:"2-digit",hourCycle:"h23"
+  }).formatToParts(dt);
+  const obj=Object.fromEntries(parts.filter(p=>p.type!=="literal").map(p=>[p.type,p.value]));
+  return Number(obj.hour)*60+Number(obj.minute);
+}
+function mergeWindows(windows){
+  const sorted=windows.filter(w=>w.end>w.start).sort((a,b)=>a.start-b.start);
+  const out=[];
+  for(const w of sorted){
+    if(!out.length||w.start>out[out.length-1].end)out.push({start:w.start,end:w.end});
+    else out[out.length-1].end=Math.max(out[out.length-1].end,w.end);
+  }
+  return out;
+}
+function subtractWindows(base,closed){
+  let result=mergeWindows(base);
+  for(const c of mergeWindows(closed)){
+    const next=[];
+    for(const w of result){
+      if(c.end<=w.start||c.start>=w.end){next.push(w);continue;}
+      if(c.start>w.start)next.push({start:w.start,end:Math.min(c.start,w.end)});
+      if(c.end<w.end)next.push({start:Math.max(c.end,w.start),end:w.end});
+    }
+    result=next;
+  }
+  return result;
+}
+function windowsFromOverrides(dateKey,overrides){
+  const d=pd(dateKey);
+  const base=defaultWindowsForDate(d);
+  const opens=[],closed=[];
+  for(const o of (overrides||[])){
+    const start=new Date(o.start_at),end=new Date(o.end_at);
+    const fmt=new Intl.DateTimeFormat("en-CA",{timeZone:"Australia/Sydney",year:"numeric",month:"2-digit",day:"2-digit"});
+    const startKey=fmt.format(start);
+    const endKey=fmt.format(new Date(end.getTime()-1));
+    if(dateKey<startKey||dateKey>endKey)continue;
+
+    let s=0,e=1440;
+    if(dateKey===startKey)s=localMinutesFromISO(o.start_at);
+    if(dateKey===endKey)e=localMinutesFromISO(o.end_at);
+    if(e===0&&dateKey===endKey)e=1440;
+
+    (o.override_type==="open"?opens:closed).push({start:s,end:e});
+  }
+  return subtractWindows([...base,...opens],closed);
+}
+async function fetchOverrides(rangeStart,rangeEnd){
+  return await supabaseRpc("get_availability_overrides",{
+    range_start:rangeStart,
+    range_end:rangeEnd
+  })||[];
+}
+
 function calc(){
   if(!state.service)return{price:0,time:0,deposit:0,remain:0,service:"—",length:"—"};
   const s=services[state.service];
@@ -947,30 +1011,57 @@ function sync(){
   renderDates();
   renderTimes();
 }
-function renderDates(){
+async function renderDates(){
   const g=document.getElementById("dateGrid");
-  g.innerHTML="";
+  g.innerHTML='<div class="notice" style="grid-column:1/-1">Loading live availability…</div>';
+
   const now=new Date();
   const earliest=new Date(now.getTime()+12*3600000);
   const latest=addDays(new Date(now.getFullYear(),now.getMonth(),now.getDate()),56);
   let start=new Date(2026,9,1);
   const earliestDay=new Date(earliest.getFullYear(),earliest.getMonth(),earliest.getDate());
   if(start<earliestDay)start=earliestDay;
+
+  if(start>latest){
+    g.innerHTML='<div class="notice" style="grid-column:1/-1">No available workdays fall inside the current 8-week window yet.</div>';
+    return;
+  }
+
+  let overrides=[];
+  try{
+    const rangeStart=sydneyDayRange(dkey(start)).start;
+    const rangeEnd=sydneyDayRange(dkey(latest)).end;
+    overrides=await fetchOverrides(rangeStart,rangeEnd);
+  }catch(err){
+    g.innerHTML=`<div class="notice" style="grid-column:1/-1">Couldn’t load live dates. Please refresh and try again.<br><small>${err.message}</small></div>`;
+    return;
+  }
+
+  g.innerHTML="";
   let shown=0;
   for(let i=0;i<90;i++){
     const d=addDays(start,i);
     if(d>latest)break;
-    if(!hours(d))continue;
     const k=dkey(d);
+    const windows=windowsFromOverrides(k,overrides);
+    if(!windows.length)continue;
+
     const b=document.createElement("button");
     b.className="date-card"+(state.date===k?" selected":"");
     b.type="button";
     b.innerHTML=`<small>${d.toLocaleDateString("en-AU",{weekday:"long"})}</small>${d.getDate()} ${d.toLocaleDateString("en-AU",{month:"short"})}`;
-    b.onclick=()=>{state.date=k;state.time=null;document.getElementById("dateError").classList.remove("show");renderDates();renderTimes();summary()};
+    b.onclick=()=>{
+      state.date=k;
+      state.time=null;
+      document.getElementById("dateError").classList.remove("show");
+      renderDates();
+      renderTimes();
+      summary();
+    };
     g.appendChild(b);
     shown++;
   }
-  if(!shown)g.innerHTML='<div class="notice" style="grid-column:1/-1">No available workdays fall inside the current 8-week window yet.</div>';
+  if(!shown)g.innerHTML='<div class="notice" style="grid-column:1/-1">No available dates are currently open in the next 8 weeks.</div>';
 }
 async function renderTimes(){
   const a=document.getElementById("timeArea");
@@ -981,18 +1072,20 @@ async function renderTimes(){
   }
 
   const selectedDate=state.date;
-  const c=calc(),d=pd(selectedDate),h=hours(d),earliest=new Date(Date.now()+12*3600000),slots=[];
+  const c=calc(),earliest=new Date(Date.now()+12*3600000),slots=[];
 
   a.className="notice";
   a.textContent="Checking live availability…";
 
-  let busy=[];
+  let busy=[],overrides=[];
   try{
     const range=sydneyDayRange(selectedDate);
-    busy=await supabaseRpc("get_busy_times",{
-      range_start:range.start,
-      range_end:range.end
-    })||[];
+    [busy,overrides]=await Promise.all([
+      supabaseRpc("get_busy_times",{range_start:range.start,range_end:range.end}),
+      fetchOverrides(range.start,range.end)
+    ]);
+    busy=busy||[];
+    overrides=overrides||[];
   }catch(err){
     a.className="notice";
     a.innerHTML=`Couldn’t load live availability. Please refresh and try again.<br><small>${err.message}</small>`;
@@ -1001,27 +1094,29 @@ async function renderTimes(){
 
   if(state.date!==selectedDate)return;
 
-  for(let s=h.open;s<=h.close;s+=15){
-    if(s+c.time>h.close)continue;
+  const windows=windowsFromOverrides(selectedDate,overrides);
+  for(const w of windows){
+    for(let s=Math.ceil(w.start/15)*15;s<=w.end;s+=15){
+      if(s+c.time>w.end)continue;
 
-    const label=ctime(s);
-    const startISO=sydneyLocalToISO(selectedDate,label);
-    const startMs=new Date(startISO).getTime();
+      const label=ctime(s);
+      const startISO=sydneyLocalToISO(selectedDate,label);
+      const startMs=new Date(startISO).getTime();
+      if(startMs<earliest.getTime())continue;
 
-    if(startMs<earliest.getTime())continue;
+      const blockedEndMs=startMs+((c.time+5)*60000);
+      const overlaps=busy.some(period=>{
+        const busyStart=new Date(period.start_at).getTime();
+        const busyEnd=new Date(period.end_at).getTime();
+        return startMs<busyEnd && blockedEndMs>busyStart;
+      });
 
-    const blockedEndMs=startMs+((c.time+5)*60000);
-
-    const overlaps=busy.some(period=>{
-      const busyStart=new Date(period.start_at).getTime();
-      const busyEnd=new Date(period.end_at).getTime();
-      return startMs<busyEnd && blockedEndMs>busyStart;
-    });
-
-    if(!overlaps)slots.push(s);
+      if(!overlaps)slots.push(s);
+    }
   }
 
-  if(!slots.length){
+  const unique=[...new Set(slots)].sort((x,y)=>x-y);
+  if(!unique.length){
     a.className="notice";
     a.textContent="No available times fit this appointment on this date.";
     return;
@@ -1029,7 +1124,7 @@ async function renderTimes(){
 
   a.className="time-grid";
   a.innerHTML="";
-  slots.forEach(s=>{
+  unique.forEach(s=>{
     const label=ctime(s);
     const b=document.createElement("button");
     b.type="button";
