@@ -600,6 +600,88 @@ footer{background:linear-gradient(90deg,#f7d2d6,#f9dce0);padding:24px 0}
   75%{transform:translateX(3px)}
 }
 
+
+.checkout-card{
+  margin-top:14px;
+  border:1px solid #efd8dd;
+  border-radius:16px;
+  background:linear-gradient(180deg,#fff9fa,#fff);
+  padding:16px;
+}
+.checkout-card h4{
+  margin:0 0 6px;
+  font:400 1.25rem Georgia,"Times New Roman",serif;
+}
+.checkout-sub{
+  color:var(--muted);
+  font-size:.82rem;
+  margin-bottom:14px;
+}
+.checkout-money{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  margin:12px 0;
+}
+.checkout-money>div{
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:#fff;
+  padding:11px;
+  text-align:center;
+}
+.checkout-money span{
+  display:block;
+  color:var(--muted);
+  font-size:.68rem;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+.checkout-money strong{
+  display:block;
+  margin-top:3px;
+  font-size:1rem;
+}
+.deposit-due{
+  border:1px solid #e8bbc3;
+  background:#fff1f4;
+  border-radius:13px;
+  padding:13px;
+  margin-top:12px;
+}
+.deposit-due strong{
+  display:block;
+  font-size:1.05rem;
+  color:#8c3140;
+}
+.deposit-due small{
+  display:block;
+  margin-top:3px;
+  color:var(--muted);
+}
+.secure-note{
+  text-align:center;
+  font-size:.72rem;
+  color:var(--muted);
+  margin-top:9px;
+  line-height:1.45;
+}
+.test-badge{
+  display:inline-block;
+  margin-bottom:10px;
+  padding:5px 8px;
+  border-radius:999px;
+  background:#fff1dc;
+  color:#9a6518;
+  font-size:.7rem;
+  font-weight:800;
+}
+@media(max-width:560px){
+  .checkout-money{grid-template-columns:1fr 1fr 1fr;gap:6px}
+  .checkout-money>div{padding:9px 6px}
+  .checkout-money strong{font-size:.92rem}
+}
+
 </style>
 </head>
 <body>
@@ -693,7 +775,17 @@ footer{background:linear-gradient(90deg,#f7d2d6,#f9dce0);padding:24px 0}
   <div class="step" id="removalStep"><h3>SOAK-OFF</h3><div class="field"><select id="removal"><option value="none">No removal needed</option><option value="own">abellabbeauty soak-off — +$20</option><option value="foreign">Foreign soak-off — +$25</option></select></div><div class="notice">Combined soak-off receives a $5 discount and keeps the full 40 minutes blocked out.</div></div>
   <div class="step"><h3>3. CHOOSE DATE & TIME</h3><div class="notice" style="margin-bottom:12px">Live availability: Monday 9:00–5:00 and Thursday 9:00–3:15, with a 5-minute buffer, 12-hour minimum notice, and bookings up to 8 weeks ahead.</div><div class="field"><label>Available dates</label><div id="dateGrid" class="date-grid"></div><div id="dateError" class="field-error">Please choose an appointment date.</div></div><div class="field"><label>Available times</label><div id="timeArea" class="notice">Choose a service and date first.</div><div id="timeError" class="field-error">Please choose an appointment time.</div></div></div>
   <div class="step"><h3>4. YOUR DETAILS</h3><div class="two"><div class="field"><label>Full name</label><input id="name" required><div id="nameError" class="field-error">Please enter your full name.</div></div><div class="field"><label>Phone</label><input id="phone" required><div id="phoneError" class="field-error">Please enter your phone number.</div></div></div><div class="field"><label>Email</label><input id="email" type="email" required><div id="emailError" class="field-error">Please enter a valid email address.</div></div><div class="field"><label>Nail inspo / notes</label><textarea id="notes"></textarea></div><div class="field"><label>Upload nail inspo</label><input id="inspo" type="file" accept="image/*"></div></div>
-  <div class="step"><h3>5. DEPOSIT</h3><div class="notice"><strong>$20 by card / Apple Pay.</strong> The live version will confirm automatically after payment.</div></div>
+  <div class="step"><h3>5. DEPOSIT</h3>
+      <div class="checkout-card">
+        <span class="test-badge">TESTING MODE</span>
+        <h4>$20 deposit required to secure your appointment</h4>
+        <div class="checkout-sub">When payments go live, your appointment will only be secured after the $20 deposit is successfully paid.</div>
+        <div class="deposit-due">
+          <strong>Card / Apple Pay</strong>
+          <small>Stripe checkout will be connected here before launch.</small>
+        </div>
+      </div>
+    </div>
   <div class="step"><h3>BOOKING POLICIES</h3><div class="notice">Deposits are non-refundable. With at least 24 hours’ notice, the deposit can transfer to a future appointment. Less than 24 hours’ notice forfeits it. A $10 late fee applies after 10 minutes. At 30 minutes late, the appointment is cancelled and the deposit is forfeited.</div><label id="agreeWrap" style="display:flex;gap:8px;margin-top:12px"><input id="agree" type="checkbox" required> I agree to the booking policies.</label><div id="agreeError" class="field-error">You need to agree to the booking policies before continuing.</div><button class="btn" id="reviewBookingBtn" type="button" style="width:100%;margin-top:14px">REVIEW BOOKING</button>
 <div id="reviewBox" class="hidden"></div>
 <div id="confirmationBox" class="hidden"></div></div>
@@ -1254,10 +1346,23 @@ function review(){
     <div class="review-line"><span>Remaining at appointment</span><strong>${money(c.remain)}</strong></div>
     <div class="review-line"><span>Name</span><strong>${document.getElementById("name").value.trim()}</strong></div>
     <div class="review-line"><span>Email</span><strong>${document.getElementById("email").value.trim()}</strong></div>
-    <div class="notice" style="margin-top:14px">Your $20 deposit is non-refundable. With at least 24 hours’ notice, it can be transferred to a future appointment.</div>
-    <div class="pay-demo">Card / Apple Pay · $20 deposit</div>
-    <button class="btn" id="saveBookingBtn" style="width:100%;margin-top:10px" onclick="saveBooking()">SAVE TEST BOOKING</button>
-    <div style="text-align:center;margin-top:8px;font-size:.72rem;color:var(--muted)">Testing mode — this saves the appointment to your live database, but no payment is taken yet.</div>
+    <div class="checkout-card">
+      <span class="test-badge">TESTING MODE</span>
+      <h4>Deposit & payment</h4>
+      <div class="checkout-money">
+        <div><span>Total</span><strong>${money(c.price)}</strong></div>
+        <div><span>Due now</span><strong>$20</strong></div>
+        <div><span>Later</span><strong>${money(c.remain)}</strong></div>
+      </div>
+      <div class="deposit-due">
+        <strong>$20 deposit due now</strong>
+        <small>Non-refundable. With at least 24 hours’ notice, it can be transferred to a future appointment.</small>
+      </div>
+      <button class="btn" id="saveBookingBtn" style="width:100%;margin-top:12px" onclick="saveBooking()">TEST: SAVE BOOKING WITHOUT PAYMENT</button>
+      <div class="secure-note">
+        No payment is taken in testing mode. Before launch, this button will become <strong>PAY $20 DEPOSIT & SECURE BOOKING</strong> and Stripe will confirm the payment before the appointment is secured.
+      </div>
+    </div>
   </div>`;
 }
 async function saveBooking(){
@@ -1321,7 +1426,7 @@ async function saveBooking(){
         <div class="review-line"><span>Deposit</span><strong>Not paid yet</strong></div>
         <div class="review-line"><span>Booking ID</span><strong style="word-break:break-all">${bookingId||"Saved"}</strong></div>
       </div>
-      <p style="margin-top:16px">Payment is not connected yet. This is a real database test so we can confirm that unavailable times disappear correctly.</p>
+      <p style="margin-top:16px">This appointment is saved for testing only. No deposit has been charged. Before launch, only a successful $20 Stripe payment will secure a client appointment.</p>
       <a class="btn" href="#homeView" style="margin-top:8px;display:inline-flex">BACK TO HOME</a>
     </div>`;
     box.scrollIntoView({behavior:"smooth",block:"center"});
