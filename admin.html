@@ -5,51 +5,327 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>abellabbeauty admin</title>
 <style>
-:root{--cream:#fffaf7;--cream2:#fff3f1;--pink:#f2bcc4;--deep:#7e2835;--ink:#1b1517;--muted:#75666a;--line:#ead9dc;--green:#2f7d5a;--red:#b8485b;--amber:#a46b18}
-*{box-sizing:border-box}body{margin:0;background:var(--cream);color:var(--ink);font-family:Arial,Helvetica,sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:none!important}
-.topbar{position:sticky;top:0;z-index:20;background:rgba(255,250,247,.97);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:14px 18px;display:flex;align-items:center;justify-content:space-between}.brand{font:400 1.55rem Georgia,"Times New Roman",serif}.pill{border:1px solid var(--line);background:#fff;border-radius:999px;padding:9px 13px;color:var(--deep);font-weight:700}
-main{width:min(1180px,calc(100% - 24px));margin:22px auto 50px}.card{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 8px 30px rgba(90,50,55,.05)}.login{max-width:430px;margin:7vh auto;padding:26px}.login h1,.toolbar h1,.panel h2{font:400 2rem Georgia,"Times New Roman",serif;margin:0 0 8px}.muted{color:var(--muted)}.field{display:grid;gap:7px;margin:14px 0}.field label{font-size:.8rem;font-weight:700}.field input,.field select,.field textarea{width:100%;border:1px solid var(--line);border-radius:11px;padding:13px 14px;background:#fff}
-.btn{border:0;border-radius:11px;background:var(--pink);color:var(--deep);padding:12px 16px;font-weight:800}.btn.secondary{background:#fff;border:1px solid var(--line)}.btn.danger{background:#fff1f3;color:var(--red);border:1px solid #f1cbd2}.btn.small{padding:8px 10px;font-size:.78rem}.error{margin-top:10px;padding:10px 12px;border-radius:10px;background:#fff0f2;color:var(--red);font-size:.85rem}
-.toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px}.navgroup{display:flex;gap:8px;align-items:center}.weeklabel{font-weight:800;min-width:180px;text-align:center}.calendar-wrap{overflow-x:auto;padding-bottom:8px}.calendar{display:grid;grid-template-columns:repeat(7,minmax(155px,1fr));gap:10px;min-width:1085px}.day{min-height:500px;padding:11px;border:1px solid var(--line);border-radius:16px;background:#fff}.day.today{outline:2px solid var(--pink)}.dayhead{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}.dayname{font-size:.76rem;text-transform:uppercase;color:var(--muted);font-weight:800}.daynum{font:400 1.45rem Georgia,"Times New Roman",serif}.plus{border:0;background:var(--cream2);color:var(--deep);border-radius:9px;width:32px;height:32px;font-size:1.1rem}
-.booking{border:1px solid #eccfd4;background:#fff7f8;border-radius:12px;padding:9px;margin:8px 0}.booking strong{display:block;font-size:.84rem}.booking small{display:block;color:var(--muted);margin-top:2px}.badge{display:inline-block;border-radius:999px;padding:3px 7px;font-size:.65rem;font-weight:800;margin-top:5px}.pending{background:#fff0d9;color:var(--amber)}.confirmed{background:#e8f6ef;color:var(--green)}.cancelled{background:#fbe9ec;color:var(--red)}.completed{background:#eee9f7;color:#66508a}
-.override{font-size:.7rem;border-radius:8px;padding:5px 7px;margin:6px 0;border:1px dashed}.override.open{background:#eef9f3;color:var(--green);border-color:#acd9c1}.override.closed{background:#fff0f2;color:var(--red);border-color:#e6b7c0}
-.drawer{position:fixed;inset:0;background:rgba(20,14,16,.38);z-index:40;display:flex;justify-content:flex-end}.panel{width:min(480px,100%);height:100%;overflow:auto;background:var(--cream);padding:22px}.panelhead{display:flex;justify-content:space-between;align-items:center}.x{border:0;background:#fff;border:1px solid var(--line);width:38px;height:38px;border-radius:50%}.actions{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}.detail{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}.detail div,.notice{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px}.detail span{display:block;color:var(--muted);font-size:.72rem}.detail strong{font-size:.9rem;word-break:break-word}.sectiontitle{font-weight:800;margin:20px 0 8px}
-@media(max-width:650px){main{width:min(100% - 16px,1180px);margin-top:14px}.topbar{padding:12px}.toolbar h1{font-size:1.55rem}.weeklabel{min-width:140px;font-size:.86rem}.panel{padding:16px}.detail{grid-template-columns:1fr}}
+:root{--cream:#fffaf7;--panel:#ffffff;--pink:#f2bcc4;--pink2:#fdecef;--deep:#7e2835;--ink:#1b1517;--muted:#75666a;--line:#ead9dc;--green:#2f7d5a;--red:#b8485b;--amber:#a46b18;--slot:64px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--cream);color:var(--ink);font-family:Arial,Helvetica,sans-serif}
+button,input,select,textarea{font:inherit} button{cursor:pointer}
+.hidden{display:none!important}
+.topbar{position:sticky;top:0;z-index:30;background:rgba(255,250,247,.98);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{font:400 1.65rem Georgia,"Times New Roman",serif}
+.signout{border:1px solid var(--line);background:#fff;border-radius:999px;padding:10px 16px;color:var(--deep);font-weight:800}
+main{width:min(1180px,calc(100% - 16px));margin:14px auto 40px}
+.login{max-width:430px;margin:8vh auto;background:#fff;border:1px solid var(--line);border-radius:20px;padding:26px}
+.login h1{font:400 2rem Georgia,"Times New Roman",serif;margin:0 0 8px}
+.muted{color:var(--muted)}
+.field{display:grid;gap:7px;margin:14px 0}
+.field label{font-size:.8rem;font-weight:700}
+.field input,.field select,.field textarea{width:100%;border:1px solid var(--line);border-radius:11px;padding:13px 14px;background:#fff}
+.btn{border:0;border-radius:11px;background:var(--pink);color:var(--deep);padding:12px 16px;font-weight:800}
+.btn.secondary{background:#fff;border:1px solid var(--line)} .btn.danger{background:#fff1f3;color:var(--red);border:1px solid #f1cbd2} .btn.small{padding:8px 10px;font-size:.78rem}
+.error{margin-top:10px;padding:10px 12px;border-radius:10px;background:#fff0f2;color:var(--red);font-size:.85rem}
+
+.headerRow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 0 10px}
+.headerRow h1{font:400 2rem Georgia,"Times New Roman",serif;margin:0}
+.weekControls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.weekLabel{font-weight:800;font-size:.95rem;min-width:150px;text-align:center}
+.dayTabs{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;margin:8px 0 14px}
+.dayTab{border:1px solid var(--line);background:#fff;border-radius:14px;padding:9px 4px;text-align:center;color:var(--muted)}
+.dayTab strong{display:block;font-size:.75rem;text-transform:uppercase}
+.dayTab span{display:block;font:400 1.35rem Georgia,"Times New Roman",serif;color:var(--ink);margin-top:2px}
+.dayTab.active{background:var(--pink2);border-color:#e9bdc5;color:var(--deep)}
+.dayTab.today{box-shadow:inset 0 0 0 2px var(--pink)}
+
+.diaryCard{background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.diaryHead{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line);background:#fffdfa}
+.diaryHeadTitle{font-weight:800}
+.diaryHeadSub{font-size:.76rem;color:var(--muted);margin-top:2px}
+.addBtn{border:0;background:var(--pink2);color:var(--deep);border-radius:10px;padding:10px 13px;font-weight:800}
+.timeline{position:relative}
+.slot{display:grid;grid-template-columns:72px 1fr;min-height:var(--slot);border-bottom:1px solid #f2e8ea}
+.timeLabel{padding:8px 8px 0 10px;font-size:.75rem;color:var(--muted);text-align:right}
+.slotBody{position:relative;border-left:1px solid var(--line);min-height:var(--slot)}
+.slotBody::after{content:"";position:absolute;left:0;right:0;top:50%;border-top:1px dashed #f5ecee}
+.booking{position:absolute;left:8px;right:8px;border:1px solid #efc9d0;background:#fff6f7;border-radius:12px;padding:8px 10px;z-index:3;box-shadow:0 3px 10px rgba(93,45,53,.06);overflow:hidden}
+.booking strong{display:block;font-size:.82rem;color:var(--deep)} .booking small{display:block;font-size:.74rem;color:var(--muted);margin-top:2px}
+.badge{display:inline-block;border-radius:999px;padding:3px 7px;font-size:.62rem;font-weight:800;margin-top:5px}
+.pending{background:#fff0d9;color:var(--amber)} .confirmed{background:#e8f6ef;color:var(--green)} .cancelled{background:#fbe9ec;color:var(--red)} .completed{background:#eee9f7;color:#66508a}
+.overrideBand{position:absolute;left:4px;right:4px;border-radius:8px;z-index:2;padding:3px 6px;font-size:.64rem;font-weight:800;overflow:hidden}
+.overrideBand.open{background:#eaf8f0;color:var(--green);border:1px dashed #9fd1b4}
+.overrideBand.closed{background:#fff0f2;color:var(--red);border:1px dashed #e4b3bd}
+
+.drawer{position:fixed;inset:0;background:rgba(20,14,16,.38);z-index:50;display:flex;justify-content:flex-end}
+.panel{width:min(480px,100%);height:100%;overflow:auto;background:var(--cream);padding:20px}
+.panelhead{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.panel h2{font:400 1.75rem Georgia,"Times New Roman",serif;margin:0}
+.x{border:0;background:#fff;border:1px solid var(--line);width:38px;height:38px;border-radius:50%}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+.detail{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.detail div,.notice{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px}
+.detail span{display:block;color:var(--muted);font-size:.72rem}
+.detail strong{font-size:.9rem;word-break:break-word}
+.sectiontitle{font-weight:800;margin:20px 0 8px}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:.72rem;color:var(--muted);margin:8px 0 12px}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px}
+
+@media(max-width:700px){
+  .topbar{padding:12px}
+  .brand{font-size:1.45rem}
+  main{width:calc(100% - 12px)}
+  .headerRow{align-items:flex-start;flex-direction:column}
+  .headerRow h1{font-size:1.65rem}
+  .weekControls{width:100%;justify-content:space-between}
+  .weekLabel{min-width:auto;flex:1}
+  .dayTabs{gap:5px}
+  .dayTab{padding:8px 2px;border-radius:12px}
+  .dayTab strong{font-size:.62rem}
+  .dayTab span{font-size:1.15rem}
+  .slot{grid-template-columns:58px 1fr}
+  .timeLabel{font-size:.68rem;padding-right:6px}
+  .panel{padding:16px}
+  .detail{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
-<div id="loginView"><div class="login card"><h1>abellabbeauty admin</h1><p class="muted">Sign in to view bookings and manage your calendar.</p><div class="field"><label>Email</label><input id="loginEmail" type="email"></div><div class="field"><label>Password</label><input id="loginPassword" type="password"></div><button class="btn" style="width:100%" onclick="login()">SIGN IN</button><div id="loginError" class="error hidden"></div></div></div>
-<div id="appView" class="hidden"><div class="topbar"><div class="brand">abellabbeauty admin</div><button class="pill" onclick="logout()">Sign out</button></div><main><div class="toolbar"><h1>Calendar</h1><div class="navgroup"><button class="btn secondary small" onclick="shiftWeek(-7)">←</button><button class="btn secondary small" onclick="goToday()">Today</button><div id="weekLabel" class="weeklabel"></div><button class="btn secondary small" onclick="shiftWeek(7)">→</button></div></div><div class="calendar-wrap"><div id="calendar" class="calendar"></div></div></main></div>
+<div id="loginView">
+  <div class="login">
+    <h1>abellabbeauty admin</h1>
+    <p class="muted">Sign in to manage bookings and availability.</p>
+    <div class="field"><label>Email</label><input id="loginEmail" type="email" autocomplete="username"></div>
+    <div class="field"><label>Password</label><input id="loginPassword" type="password" autocomplete="current-password"></div>
+    <button class="btn" style="width:100%" onclick="login()">SIGN IN</button>
+    <div id="loginError" class="error hidden"></div>
+  </div>
+</div>
+
+<div id="appView" class="hidden">
+  <div class="topbar"><div class="brand">abellabbeauty admin</div><button class="signout" onclick="logout()">Sign out</button></div>
+  <main>
+    <div class="headerRow">
+      <h1>Appointment diary</h1>
+      <div class="weekControls">
+        <button class="btn secondary small" onclick="shiftWeek(-7)">←</button>
+        <button class="btn secondary small" onclick="goToday()">Today</button>
+        <div id="weekLabel" class="weekLabel"></div>
+        <button class="btn secondary small" onclick="shiftWeek(7)">→</button>
+      </div>
+    </div>
+
+    <div id="dayTabs" class="dayTabs"></div>
+
+    <div class="legend">
+      <span><span class="dot" style="background:#fff0d9"></span>Pending</span>
+      <span><span class="dot" style="background:#e8f6ef"></span>Confirmed</span>
+      <span><span class="dot" style="background:#eaf8f0"></span>Open override</span>
+      <span><span class="dot" style="background:#fff0f2"></span>Closed/block</span>
+    </div>
+
+    <div class="diaryCard">
+      <div class="diaryHead">
+        <div><div id="selectedDayTitle" class="diaryHeadTitle"></div><div id="selectedDaySub" class="diaryHeadSub"></div></div>
+        <button class="addBtn" onclick="openDay(selectedDateKey)">+ Availability</button>
+      </div>
+      <div id="timeline" class="timeline"></div>
+    </div>
+  </main>
+</div>
+
 <div id="drawer" class="drawer hidden" onclick="drawerBackdrop(event)"><div class="panel" id="panel"></div></div>
+
 <script>
 const SUPABASE_URL="https://bxntbajgmpmalmqdxqiv.supabase.co";
 const SUPABASE_KEY="sb_publishable_u5HE_sMnuD6LUEsj-HkJeA_LLLFxk5A";
 let accessToken=sessionStorage.getItem("abella_admin_token")||"";
-let weekStart=startOfWeek(new Date()),bookings=[],overrides=[];
+let weekStart=startOfWeek(new Date());
+let selectedDateKey=dkey(new Date());
+let bookings=[],overrides=[];
+const DAY_START=480;  // 8:00 am
+const DAY_END=1200;   // 8:00 pm
+const SLOT_MIN=30;
+const SLOT_PX=64;
+
 function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
 function dkey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`}
 function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x}
 function startOfWeek(d){const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());const day=(x.getDay()+6)%7;x.setDate(x.getDate()-day);return x}
-function fmtDay(d){return d.toLocaleDateString("en-AU",{weekday:"short"})}
 function fmtMonthDay(d){return d.toLocaleDateString("en-AU",{day:"numeric",month:"short"})}
-function sydneyParts(iso){const p=new Intl.DateTimeFormat("en-AU",{timeZone:"Australia/Sydney",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(new Date(iso));return Object.fromEntries(p.filter(x=>x.type!=="literal").map(x=>[x.type,x.value]))}
+function sydneyParts(iso){
+  const p=new Intl.DateTimeFormat("en-AU",{timeZone:"Australia/Sydney",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(new Date(iso));
+  return Object.fromEntries(p.filter(x=>x.type!=="literal").map(x=>[x.type,x.value]));
+}
 function bookingDateKey(iso){const p=sydneyParts(iso);return `${p.year}-${p.month}-${p.day}`}
+function bookingMinutes(iso){const p=sydneyParts(iso);return Number(p.hour)*60+Number(p.minute)}
 function bookingTime(iso){const p=sydneyParts(iso);let h=Number(p.hour),ap=h>=12?"pm":"am";h=h%12||12;return `${h}:${p.minute} ${ap}`}
-function sydneyLocalToISO(dateKey,time24){const [y,m,d]=dateKey.split("-").map(Number);const [hh,mm]=time24.split(":").map(Number);const guess=new Date(Date.UTC(y,m-1,d,hh,mm,0));const f=new Intl.DateTimeFormat("en-CA",{timeZone:"Australia/Sydney",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit",hourCycle:"h23"});const p=Object.fromEntries(f.formatToParts(guess).filter(x=>x.type!=="literal").map(x=>[x.type,x.value]));const represented=Date.UTC(Number(p.year),Number(p.month)-1,Number(p.day),Number(p.hour),Number(p.minute),Number(p.second));return new Date(guess.getTime()-(represented-guess.getTime())).toISOString()}
+function minsLabel(mins){let h=Math.floor(mins/60),m=mins%60,ap=h>=12?"pm":"am";h=h%12||12;return `${h}:${String(m).padStart(2,"0")} ${ap}`}
+function sydneyLocalToISO(dateKey,time24){
+  const [y,m,d]=dateKey.split("-").map(Number),[hh,mm]=time24.split(":").map(Number);
+  const guess=new Date(Date.UTC(y,m-1,d,hh,mm,0));
+  const f=new Intl.DateTimeFormat("en-CA",{timeZone:"Australia/Sydney",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit",hourCycle:"h23"});
+  const p=Object.fromEntries(f.formatToParts(guess).filter(x=>x.type!=="literal").map(x=>[x.type,x.value]));
+  const represented=Date.UTC(Number(p.year),Number(p.month)-1,Number(p.day),Number(p.hour),Number(p.minute),Number(p.second));
+  return new Date(guess.getTime()-(represented-guess.getTime())).toISOString();
+}
 function nextDayKey(k){const [y,m,d]=k.split("-").map(Number);return dkey(addDays(new Date(y,m-1,d),1))}
-async function api(path,opts={}){const headers={"apikey":SUPABASE_KEY,"Content-Type":"application/json",...(opts.headers||{})};if(accessToken)headers.Authorization=`Bearer ${accessToken}`;const r=await fetch(SUPABASE_URL+path,{...opts,headers});const text=await r.text();let data=null;if(text){try{data=JSON.parse(text)}catch{data=text}}if(!r.ok)throw new Error(data?.message||data?.error_description||data?.msg||"Request failed");return data}
-async function login(){const email=document.getElementById("loginEmail").value.trim(),password=document.getElementById("loginPassword").value,e=document.getElementById("loginError");e.classList.add("hidden");try{const data=await api("/auth/v1/token?grant_type=password",{method:"POST",body:JSON.stringify({email,password})});accessToken=data.access_token;sessionStorage.setItem("abella_admin_token",accessToken);await showApp()}catch(err){e.textContent=err.message;e.classList.remove("hidden")}}
+
+async function api(path,opts={}){
+  const headers={"apikey":SUPABASE_KEY,"Content-Type":"application/json",...(opts.headers||{})};
+  if(accessToken)headers.Authorization=`Bearer ${accessToken}`;
+  const r=await fetch(SUPABASE_URL+path,{...opts,headers});
+  const text=await r.text(); let data=null;
+  if(text){try{data=JSON.parse(text)}catch{data=text}}
+  if(!r.ok)throw new Error(data?.message||data?.error_description||data?.msg||"Request failed");
+  return data;
+}
+
+async function login(){
+  const email=document.getElementById("loginEmail").value.trim(),password=document.getElementById("loginPassword").value,e=document.getElementById("loginError");
+  e.classList.add("hidden");
+  try{
+    const data=await api("/auth/v1/token?grant_type=password",{method:"POST",body:JSON.stringify({email,password})});
+    accessToken=data.access_token; sessionStorage.setItem("abella_admin_token",accessToken); await showApp();
+  }catch(err){e.textContent=err.message;e.classList.remove("hidden")}
+}
 function logout(){sessionStorage.removeItem("abella_admin_token");accessToken="";location.reload()}
 async function showApp(){document.getElementById("loginView").classList.add("hidden");document.getElementById("appView").classList.remove("hidden");await loadWeek()}
-async function loadWeek(){const end=addDays(weekStart,7),startISO=sydneyLocalToISO(dkey(weekStart),"00:00"),endISO=sydneyLocalToISO(dkey(end),"00:00");try{const [b,o]=await Promise.all([api(`/rest/v1/bookings?select=*&start_at=gte.${encodeURIComponent(startISO)}&start_at=lt.${encodeURIComponent(endISO)}&order=start_at.asc`),api(`/rest/v1/availability_overrides?select=*&start_at=lt.${encodeURIComponent(endISO)}&end_at=gt.${encodeURIComponent(startISO)}&order=start_at.asc`)]);bookings=b||[];overrides=o||[];renderCalendar()}catch(err){if(/jwt|token|auth/i.test(err.message))return logout();alert("Could not load calendar: "+err.message)}}
-function renderCalendar(){document.getElementById("weekLabel").textContent=`${fmtMonthDay(weekStart)} – ${fmtMonthDay(addDays(weekStart,6))}`;const cal=document.getElementById("calendar");cal.innerHTML="";const today=dkey(new Date());for(let i=0;i<7;i++){const d=addDays(weekStart,i),key=dkey(d),dayBookings=bookings.filter(b=>bookingDateKey(b.start_at)===key),dayOverrides=overrides.filter(o=>{const s=bookingDateKey(o.start_at),e=bookingDateKey(new Date(new Date(o.end_at).getTime()-1).toISOString());return key>=s&&key<=e});const el=document.createElement("div");el.className="day"+(key===today?" today":"");el.innerHTML=`<div class="dayhead"><div><div class="dayname">${fmtDay(d)}</div><div class="daynum">${d.getDate()}</div></div><button class="plus" onclick="openDay('${key}')">+</button></div>`;dayOverrides.forEach(o=>{const x=document.createElement("div");x.className=`override ${o.override_type}`;x.textContent=`${o.override_type==="open"?"Open":"Closed"} · ${bookingTime(o.start_at)}–${bookingTime(o.end_at)}`;el.appendChild(x)});dayBookings.forEach(b=>{const x=document.createElement("button");x.className="booking";x.style.width="100%";x.style.textAlign="left";x.onclick=()=>openBooking(b.id);x.innerHTML=`<strong>${bookingTime(b.start_at)} · ${esc(b.client_name)}</strong><small>${esc(b.service_name)}</small><span class="badge ${esc(b.booking_status)}">${esc(b.booking_status)}</span>`;el.appendChild(x)});if(!dayBookings.length&&!dayOverrides.length){const x=document.createElement("div");x.className="muted";x.style.fontSize=".75rem";x.style.marginTop="14px";x.textContent="No bookings";el.appendChild(x)}cal.appendChild(el)}}
-function shiftWeek(n){weekStart=addDays(weekStart,n);loadWeek()}function goToday(){weekStart=startOfWeek(new Date());loadWeek()}
-function openDrawer(content){document.getElementById("panel").innerHTML=content;document.getElementById("drawer").classList.remove("hidden")}function closeDrawer(){document.getElementById("drawer").classList.add("hidden")}function drawerBackdrop(e){if(e.target.id==="drawer")closeDrawer()}
-function openDay(dateKey){const [y,m,d]=dateKey.split("-").map(Number),dateObj=new Date(y,m-1,d);const existing=overrides.filter(o=>{const s=bookingDateKey(o.start_at),e=bookingDateKey(new Date(new Date(o.end_at).getTime()-1).toISOString());return dateKey>=s&&dateKey<=e});openDrawer(`<div class="panelhead"><h2>${esc(dateObj.toLocaleDateString("en-AU",{weekday:"long",day:"numeric",month:"long"}))}</h2><button class="x" onclick="closeDrawer()">×</button></div><div class="sectiontitle">Open extra availability</div><div class="field"><label>Start</label><input id="openStart" type="time" value="09:00" step="900"></div><div class="field"><label>Finish</label><input id="openEnd" type="time" value="17:00" step="900"></div><div class="field"><label>Note</label><input id="openNote" placeholder="Extra day"></div><button class="btn" onclick="saveOverride('${dateKey}','open')">OPEN THIS TIME</button><div class="sectiontitle">Close / block time</div><div class="field"><label>Start</label><input id="closeStart" type="time" value="12:00" step="900"></div><div class="field"><label>Finish</label><input id="closeEnd" type="time" value="13:00" step="900"></div><div class="field"><label>Reason</label><input id="closeNote" placeholder="Lunch / appointment / day off"></div><div class="actions"><button class="btn secondary" onclick="saveOverride('${dateKey}','closed')">BLOCK THIS TIME</button><button class="btn danger" onclick="closeWholeDay('${dateKey}')">CLOSE WHOLE DAY</button></div><div class="sectiontitle">Existing overrides</div>${existing.length?existing.map(o=>`<div class="notice" style="margin-bottom:8px"><strong>${o.override_type==="open"?"OPEN":"CLOSED"}</strong><br>${bookingTime(o.start_at)}–${bookingTime(o.end_at)}${o.note?` · ${esc(o.note)}`:""}<br><button class="btn danger small" style="margin-top:8px" onclick="deleteOverride('${o.id}')">Remove</button></div>`).join(""):'<div class="notice">No overrides for this day.</div>'}`)}
-async function saveOverride(dateKey,type){const p=type==="open"?"open":"close",s=document.getElementById(p+"Start").value,e=document.getElementById(p+"End").value,n=document.getElementById(p+"Note").value.trim()||null;if(!s||!e||e<=s)return alert("Finish time must be after start time.");try{await api("/rest/v1/availability_overrides",{method:"POST",headers:{Prefer:"return=minimal"},body:JSON.stringify({start_at:sydneyLocalToISO(dateKey,s),end_at:sydneyLocalToISO(dateKey,e),override_type:type,note:n})});closeDrawer();await loadWeek()}catch(err){alert(err.message)}}
-async function closeWholeDay(k){if(!confirm("Close this whole day to online bookings?"))return;try{await api("/rest/v1/availability_overrides",{method:"POST",headers:{Prefer:"return=minimal"},body:JSON.stringify({start_at:sydneyLocalToISO(k,"00:00"),end_at:sydneyLocalToISO(nextDayKey(k),"00:00"),override_type:"closed",note:"Whole day closed"})});closeDrawer();await loadWeek()}catch(err){alert(err.message)}}
+
+async function loadWeek(){
+  const end=addDays(weekStart,7),startISO=sydneyLocalToISO(dkey(weekStart),"00:00"),endISO=sydneyLocalToISO(dkey(end),"00:00");
+  try{
+    const [b,o]=await Promise.all([
+      api(`/rest/v1/bookings?select=*&start_at=gte.${encodeURIComponent(startISO)}&start_at=lt.${encodeURIComponent(endISO)}&order=start_at.asc`),
+      api(`/rest/v1/availability_overrides?select=*&start_at=lt.${encodeURIComponent(endISO)}&end_at=gt.${encodeURIComponent(startISO)}&order=start_at.asc`)
+    ]);
+    bookings=b||[];overrides=o||[];renderAll();
+  }catch(err){if(/jwt|token|auth/i.test(err.message))return logout();alert("Could not load calendar: "+err.message)}
+}
+
+function renderAll(){
+  document.getElementById("weekLabel").textContent=`${fmtMonthDay(weekStart)} – ${fmtMonthDay(addDays(weekStart,6))}`;
+  renderDayTabs();
+  renderTimeline();
+}
+function renderDayTabs(){
+  const wrap=document.getElementById("dayTabs");wrap.innerHTML="";
+  const today=dkey(new Date());
+  for(let i=0;i<7;i++){
+    const d=addDays(weekStart,i),key=dkey(d),btn=document.createElement("button");
+    btn.className="dayTab"+(key===selectedDateKey?" active":"")+(key===today?" today":"");
+    btn.innerHTML=`<strong>${d.toLocaleDateString("en-AU",{weekday:"short"})}</strong><span>${d.getDate()}</span>`;
+    btn.onclick=()=>{selectedDateKey=key;renderAll()};
+    wrap.appendChild(btn);
+  }
+}
+function renderTimeline(){
+  const [y,m,d]=selectedDateKey.split("-").map(Number),dateObj=new Date(y,m-1,d);
+  document.getElementById("selectedDayTitle").textContent=dateObj.toLocaleDateString("en-AU",{weekday:"long",day:"numeric",month:"long"});
+  const dayBookings=bookings.filter(b=>bookingDateKey(b.start_at)===selectedDateKey);
+  document.getElementById("selectedDaySub").textContent=dayBookings.length?`${dayBookings.length} appointment${dayBookings.length===1?"":"s"}`:"No appointments";
+
+  const timeline=document.getElementById("timeline"); timeline.innerHTML="";
+  const slotCount=(DAY_END-DAY_START)/SLOT_MIN;
+  for(let i=0;i<slotCount;i++){
+    const mins=DAY_START+i*SLOT_MIN,slot=document.createElement("div");
+    slot.className="slot";
+    slot.innerHTML=`<div class="timeLabel">${minsLabel(mins)}</div><div class="slotBody" onclick="quickAdd('${selectedDateKey}','${String(Math.floor(mins/60)).padStart(2,"0")}:${String(mins%60).padStart(2,"0")}')"></div>`;
+    timeline.appendChild(slot);
+  }
+
+  const bodyLeft=72;
+  for(const o of overrides.filter(x=>selectedDateKey>=bookingDateKey(x.start_at)&&selectedDateKey<=bookingDateKey(new Date(new Date(x.end_at).getTime()-1).toISOString()))){
+    const start=Math.max(DAY_START,bookingMinutes(o.start_at)),end=Math.min(DAY_END,bookingMinutes(o.end_at));
+    if(end<=DAY_START||start>=DAY_END)continue;
+    const band=document.createElement("div");
+    band.className=`overrideBand ${o.override_type}`;
+    band.style.left=`${bodyLeft+4}px`;
+    band.style.top=`${((start-DAY_START)/SLOT_MIN)*SLOT_PX+2}px`;
+    band.style.height=`${Math.max(22,((end-start)/SLOT_MIN)*SLOT_PX-4)}px`;
+    band.textContent=`${o.override_type==="open"?"OPEN":"CLOSED"} · ${bookingTime(o.start_at)}–${bookingTime(o.end_at)}`;
+    band.onclick=(e)=>{e.stopPropagation();openDay(selectedDateKey)};
+    timeline.appendChild(band);
+  }
+
+  for(const b of dayBookings){
+    const start=bookingMinutes(b.start_at),end=bookingMinutes(b.end_at);
+    if(end<=DAY_START||start>=DAY_END)continue;
+    const card=document.createElement("button");
+    card.className="booking";
+    card.style.left=`${bodyLeft+8}px`;
+    card.style.top=`${((start-DAY_START)/SLOT_MIN)*SLOT_PX+4}px`;
+    card.style.height=`${Math.max(52,((end-start)/SLOT_MIN)*SLOT_PX-8)}px`;
+    card.onclick=()=>openBooking(b.id);
+    card.innerHTML=`<strong>${bookingTime(b.start_at)} · ${esc(b.client_name)}</strong><small>${esc(b.service_name)}</small><span class="badge ${esc(b.booking_status)}">${esc(b.booking_status)}</span>`;
+    timeline.appendChild(card);
+  }
+}
+function shiftWeek(n){weekStart=addDays(weekStart,n);selectedDateKey=dkey(weekStart);loadWeek()}
+function goToday(){weekStart=startOfWeek(new Date());selectedDateKey=dkey(new Date());loadWeek()}
+
+function openDrawer(content){document.getElementById("panel").innerHTML=content;document.getElementById("drawer").classList.remove("hidden")}
+function closeDrawer(){document.getElementById("drawer").classList.add("hidden")}
+function drawerBackdrop(e){if(e.target.id==="drawer")closeDrawer()}
+
+function quickAdd(dateKey,time24){
+  openDay(dateKey,time24);
+}
+function openDay(dateKey,prefill="09:00"){
+  const [y,m,d]=dateKey.split("-").map(Number),dateObj=new Date(y,m-1,d);
+  const existing=overrides.filter(o=>dateKey>=bookingDateKey(o.start_at)&&dateKey<=bookingDateKey(new Date(new Date(o.end_at).getTime()-1).toISOString()));
+  const [hh,mm]=prefill.split(":").map(Number); const endMin=Math.min(hh*60+mm+60,23*60+45); const end24=`${String(Math.floor(endMin/60)).padStart(2,"0")}:${String(endMin%60).padStart(2,"0")}`;
+  openDrawer(`
+    <div class="panelhead"><h2>${esc(dateObj.toLocaleDateString("en-AU",{weekday:"long",day:"numeric",month:"long"}))}</h2><button class="x" onclick="closeDrawer()">×</button></div>
+    <div class="sectiontitle">Open extra availability</div>
+    <div class="field"><label>Start</label><input id="openStart" type="time" value="${prefill}" step="900"></div>
+    <div class="field"><label>Finish</label><input id="openEnd" type="time" value="${end24}" step="900"></div>
+    <div class="field"><label>Note</label><input id="openNote" placeholder="Extra hours / extra day"></div>
+    <button class="btn" onclick="saveOverride('${dateKey}','open')">OPEN THIS TIME</button>
+
+    <div class="sectiontitle">Close / block time</div>
+    <div class="field"><label>Start</label><input id="closeStart" type="time" value="${prefill}" step="900"></div>
+    <div class="field"><label>Finish</label><input id="closeEnd" type="time" value="${end24}" step="900"></div>
+    <div class="field"><label>Reason</label><input id="closeNote" placeholder="Lunch / appointment / day off"></div>
+    <div class="actions"><button class="btn secondary" onclick="saveOverride('${dateKey}','closed')">BLOCK THIS TIME</button><button class="btn danger" onclick="closeWholeDay('${dateKey}')">CLOSE WHOLE DAY</button></div>
+
+    <div class="sectiontitle">Existing overrides</div>
+    ${existing.length?existing.map(o=>`<div class="notice" style="margin-bottom:8px"><strong>${o.override_type==="open"?"OPEN":"CLOSED"}</strong><br>${bookingTime(o.start_at)}–${bookingTime(o.end_at)}${o.note?` · ${esc(o.note)}`:""}<br><button class="btn danger small" style="margin-top:8px" onclick="deleteOverride('${o.id}')">Remove</button></div>`).join(""):'<div class="notice">No overrides for this day.</div>'}
+  `);
+}
+async function saveOverride(dateKey,type){
+  const p=type==="open"?"open":"close",s=document.getElementById(p+"Start").value,e=document.getElementById(p+"End").value,n=document.getElementById(p+"Note").value.trim()||null;
+  if(!s||!e||e<=s)return alert("Finish time must be after start time.");
+  try{await api("/rest/v1/availability_overrides",{method:"POST",headers:{Prefer:"return=minimal"},body:JSON.stringify({start_at:sydneyLocalToISO(dateKey,s),end_at:sydneyLocalToISO(dateKey,e),override_type:type,note:n})});closeDrawer();await loadWeek()}catch(err){alert(err.message)}
+}
+async function closeWholeDay(k){
+  if(!confirm("Close this whole day to online bookings?"))return;
+  try{await api("/rest/v1/availability_overrides",{method:"POST",headers:{Prefer:"return=minimal"},body:JSON.stringify({start_at:sydneyLocalToISO(k,"00:00"),end_at:sydneyLocalToISO(nextDayKey(k),"00:00"),override_type:"closed",note:"Whole day closed"})});closeDrawer();await loadWeek()}catch(err){alert(err.message)}
+}
 async function deleteOverride(id){if(!confirm("Remove this availability override?"))return;try{await api(`/rest/v1/availability_overrides?id=eq.${id}`,{method:"DELETE"});closeDrawer();await loadWeek()}catch(err){alert(err.message)}}
-function openBooking(id){const b=bookings.find(x=>x.id===id);if(!b)return;const details=b.service_details||{},addOns=Array.isArray(details.addons)?details.addons.map(a=>`${esc(a.name)}${a.quantity?` ×${a.quantity}`:""}`).join(", "):"—";openDrawer(`<div class="panelhead"><h2>${esc(b.client_name)}</h2><button class="x" onclick="closeDrawer()">×</button></div><div class="detail"><div><span>Date</span><strong>${esc(new Date(b.start_at).toLocaleDateString("en-AU",{timeZone:"Australia/Sydney",weekday:"long",day:"numeric",month:"long"}))}</strong></div><div><span>Time</span><strong>${bookingTime(b.start_at)}–${bookingTime(b.end_at)}</strong></div><div><span>Service</span><strong>${esc(b.service_name)}</strong></div><div><span>Total</span><strong>${Number(b.total_price).toLocaleString("en-AU",{style:"currency",currency:"AUD"})}</strong></div><div><span>Deposit</span><strong>${esc(b.payment_status)} · $${Number(b.deposit_amount).toFixed(0)}</strong></div><div><span>Status</span><strong>${esc(b.booking_status)}</strong></div><div><span>Email</span><strong>${esc(b.client_email)}</strong></div><div><span>Phone</span><strong>${esc(b.client_phone)}</strong></div></div><div class="notice"><strong>Add-ons</strong><br>${addOns}</div>${b.notes?`<div class="notice" style="margin-top:10px"><strong>Notes</strong><br>${esc(b.notes)}</div>`:""}<div class="sectiontitle">Booking status</div><div class="actions"><button class="btn small" onclick="updateBooking('${b.id}',{booking_status:'confirmed'})">Confirm</button><button class="btn secondary small" onclick="updateBooking('${b.id}',{booking_status:'completed'})">Complete</button><button class="btn danger small" onclick="updateBooking('${b.id}',{booking_status:'cancelled'})">Cancel</button></div><div class="sectiontitle">Deposit status</div><div class="actions"><button class="btn small" onclick="updateBooking('${b.id}',{payment_status:'paid'})">Mark paid</button><button class="btn secondary small" onclick="updateBooking('${b.id}',{payment_status:'unpaid'})">Mark unpaid</button><button class="btn danger small" onclick="updateBooking('${b.id}',{payment_status:'refunded'})">Refunded</button></div>`)}
+
+function openBooking(id){
+  const b=bookings.find(x=>x.id===id);if(!b)return;
+  const details=b.service_details||{},addOns=Array.isArray(details.addons)?details.addons.map(a=>`${esc(a.name)}${a.quantity?` ×${a.quantity}`:""}`).join(", "):"—";
+  openDrawer(`
+    <div class="panelhead"><h2>${esc(b.client_name)}</h2><button class="x" onclick="closeDrawer()">×</button></div>
+    <div class="detail">
+      <div><span>Date</span><strong>${esc(new Date(b.start_at).toLocaleDateString("en-AU",{timeZone:"Australia/Sydney",weekday:"long",day:"numeric",month:"long"}))}</strong></div>
+      <div><span>Time</span><strong>${bookingTime(b.start_at)}–${bookingTime(b.end_at)}</strong></div>
+      <div><span>Service</span><strong>${esc(b.service_name)}</strong></div>
+      <div><span>Total</span><strong>${Number(b.total_price).toLocaleString("en-AU",{style:"currency",currency:"AUD"})}</strong></div>
+      <div><span>Deposit</span><strong>${esc(b.payment_status)} · $${Number(b.deposit_amount).toFixed(0)}</strong></div>
+      <div><span>Status</span><strong>${esc(b.booking_status)}</strong></div>
+      <div><span>Email</span><strong>${esc(b.client_email)}</strong></div>
+      <div><span>Phone</span><strong>${esc(b.client_phone)}</strong></div>
+    </div>
+    <div class="notice"><strong>Add-ons</strong><br>${addOns}</div>
+    ${b.notes?`<div class="notice" style="margin-top:10px"><strong>Notes</strong><br>${esc(b.notes)}</div>`:""}
+    <div class="sectiontitle">Booking status</div>
+    <div class="actions"><button class="btn small" onclick="updateBooking('${b.id}',{booking_status:'confirmed'})">Confirm</button><button class="btn secondary small" onclick="updateBooking('${b.id}',{booking_status:'completed'})">Complete</button><button class="btn danger small" onclick="updateBooking('${b.id}',{booking_status:'cancelled'})">Cancel</button></div>
+    <div class="sectiontitle">Deposit status</div>
+    <div class="actions"><button class="btn small" onclick="updateBooking('${b.id}',{payment_status:'paid'})">Mark paid</button><button class="btn secondary small" onclick="updateBooking('${b.id}',{payment_status:'unpaid'})">Mark unpaid</button><button class="btn danger small" onclick="updateBooking('${b.id}',{payment_status:'refunded'})">Refunded</button></div>
+  `);
+}
 async function updateBooking(id,patch){try{await api(`/rest/v1/bookings?id=eq.${id}`,{method:"PATCH",headers:{Prefer:"return=minimal"},body:JSON.stringify(patch)});closeDrawer();await loadWeek()}catch(err){alert(err.message)}}
+
 if(accessToken)showApp();
-</script></body></html>
+</script>
+</body>
+</html>
