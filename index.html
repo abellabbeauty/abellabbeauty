@@ -759,12 +759,12 @@ footer{background:linear-gradient(90deg,#f7d2d6,#f9dce0);padding:24px 0}
   <div class="step"><h2>1. CHOOSE YOUR SERVICE</h2>
 <div class="notice" style="margin-bottom:12px">Tap one service to select it. Your price and timing will update underneath.</div>
 <div id="serviceOptions" class="option-grid">
-  <label class="service-choice"><input type="radio" name="mainService" value="acrylic"><span class="option"><strong>Acrylic Full Set</strong><small>$50 · 1 hr 45 min</small></span></label>
-  <label class="service-choice"><input type="radio" name="mainService" value="biabNatural"><span class="option"><strong>BIAB — Natural Nails</strong><small>$40 · 1 hr 10 min</small></span></label>
-  <label class="service-choice"><input type="radio" name="mainService" value="biabTips"><span class="option"><strong>BIAB — With Tips</strong><small>$55 · 1 hr 25 min</small></span></label>
-  <label class="service-choice"><input type="radio" name="mainService" value="shellac"><span class="option"><strong>Shellac Manicure</strong><small>$30 · 40 min</small></span></label>
-  <label class="service-choice"><input type="radio" name="mainService" value="infill"><span class="option"><strong>Acrylic Infill</strong><small>$40 · 1 hr 20 min</small></span></label>
-  <label class="service-choice"><input type="radio" name="mainService" value="foreignInfill"><span class="option"><strong>Foreign Acrylic Infill</strong><small>$50 · 1 hr 35 min</small></span></label>
+  <label class="service-choice"><input type="radio" name="mainService" value="acrylic"><span class="option"><strong>Acrylic Full Set</strong><small>$60 · 1 hr 45 min</small></span></label>
+  <label class="service-choice"><input type="radio" name="mainService" value="biabNatural"><span class="option"><strong>BIAB — Natural Nails</strong><small>$50 · 1 hr 10 min</small></span></label>
+  <label class="service-choice"><input type="radio" name="mainService" value="biabTips"><span class="option"><strong>BIAB — With Tips</strong><small>$60 · 1 hr 25 min</small></span></label>
+  <label class="service-choice"><input type="radio" name="mainService" value="shellac"><span class="option"><strong>Shellac Manicure</strong><small>$35 · 40 min</small></span></label>
+  <label class="service-choice"><input type="radio" name="mainService" value="infill"><span class="option"><strong>Acrylic Infill</strong><small>$55 · 1 hr 20 min</small></span></label>
+  <label class="service-choice"><input type="radio" name="mainService" value="foreignInfill"><span class="option"><strong>Foreign Acrylic Infill</strong><small>$60 · 1 hr 35 min</small></span></label>
   <label class="service-choice"><input type="radio" name="mainService" value="soakoff"><span class="option"><strong>Soak Off</strong><small>$25 · 40 min</small></span></label>
   <label class="service-choice"><input type="radio" name="mainService" value="foreignSoakoff"><span class="option"><strong>Foreign Soak Off</strong><small>$30 · 40 min</small></span></label>
 </div><div id="serviceError" class="section-error">Please choose a service to continue.</div></div>
@@ -773,7 +773,7 @@ footer{background:linear-gradient(90deg,#f7d2d6,#f9dce0);padding:24px 0}
   <div class="step hidden" id="addonStep"><h3>NAIL ART & ADD-ONS</h3><div id="addonList"></div></div>
   <div class="step hidden" id="shapeChangeStep"><h3>SHAPE CHANGE — INFILL</h3><label><input type="checkbox" id="shapeChange"> Add shape change +$15 · +15 min</label></div>
   <div class="step" id="removalStep"><h3>SOAK-OFF</h3><div class="field"><select id="removal"><option value="none">No removal needed</option><option value="own">abellabbeauty soak-off — +$20</option><option value="foreign">Foreign soak-off — +$25</option></select></div><div class="notice">Combined soak-off receives a $5 discount and keeps the full 40 minutes blocked out.</div></div>
-  <div class="step"><h3>3. CHOOSE DATE & TIME</h3><div class="notice" style="margin-bottom:12px">Live availability: Monday 9:00–5:00 and Thursday 9:00–3:15, with a 5-minute buffer, 12-hour minimum notice, and bookings up to 8 weeks ahead.</div><div class="field"><label>Available dates</label><div id="dateGrid" class="date-grid"></div><div id="dateError" class="field-error">Please choose an appointment date.</div></div><div class="field"><label>Available times</label><div id="timeArea" class="notice">Choose a service and date first.</div><div id="timeError" class="field-error">Please choose an appointment time.</div></div></div>
+  <div class="step"><h3>3. CHOOSE DATE & TIME</h3><div class="notice" style="margin-bottom:12px">Choose from the available dates and times below.</div><div class="field"><label>Available dates</label><div id="dateGrid" class="date-grid"></div><div id="dateError" class="field-error">Please choose an appointment date.</div></div><div class="field"><label>Available times</label><div id="timeArea" class="notice">Choose a service and date first.</div><div id="timeError" class="field-error">Please choose an appointment time.</div></div></div>
   <div class="step"><h3>4. YOUR DETAILS</h3><div class="two"><div class="field"><label>Full name</label><input id="name" required><div id="nameError" class="field-error">Please enter your full name.</div></div><div class="field"><label>Phone</label><input id="phone" required><div id="phoneError" class="field-error">Please enter your phone number.</div></div></div><div class="field"><label>Email</label><input id="email" type="email" required><div id="emailError" class="field-error">Please enter a valid email address.</div></div><div class="field"><label>Nail inspo / notes</label><textarea id="notes"></textarea></div><div class="field"><label>Upload nail inspo</label><input id="inspo" type="file" accept="image/*"></div></div>
   <div class="step"><h3>5. DEPOSIT</h3>
       <div class="checkout-card">
@@ -785,7 +785,7 @@ footer{background:linear-gradient(90deg,#f7d2d6,#f9dce0);padding:24px 0}
         </div>
       </div>
     </div>
-  <div class="step"><h3>BOOKING POLICIES</h3><div class="notice">Deposits are non-refundable. With at least 24 hours’ notice, the deposit can transfer to a future appointment. Less than 24 hours’ notice forfeits it. A $10 late fee applies after 10 minutes. At 30 minutes late, the appointment is cancelled and the deposit is forfeited.</div><label id="agreeWrap" style="display:flex;gap:8px;margin-top:12px"><input id="agree" type="checkbox" required> I agree to the booking policies.</label><div id="agreeError" class="field-error">You need to agree to the booking policies before continuing.</div><button class="btn" id="reviewBookingBtn" type="button" style="width:100%;margin-top:14px">REVIEW BOOKING</button>
+  <div class="step"><h3>BOOKING POLICIES</h3><div class="notice">Deposits are non-refundable. With at least 24 hours’ notice, the deposit can transfer to a future appointment. Less than 24 hours’ notice forfeits it. A $10 late fee applies after 10 minutes. At 20 minutes late, the appointment is cancelled and the deposit is forfeited.</div><label id="agreeWrap" style="display:flex;gap:8px;margin-top:12px"><input id="agree" type="checkbox" required> I agree to the booking policies.</label><div id="agreeError" class="field-error">You need to agree to the booking policies before continuing.</div><button class="btn" id="reviewBookingBtn" type="button" style="width:100%;margin-top:14px">REVIEW BOOKING</button>
 <div id="reviewBox" class="hidden"></div>
 <div id="confirmationBox" class="hidden"></div></div>
 </div>
@@ -880,12 +880,12 @@ function sydneyDayRange(dateKey){
 }
 
 const services={
-  acrylic:{label:"Acrylic Full Set",price:50,time:105,acrylic:true,art:true},
-  biabNatural:{label:"BIAB — Natural Nails",price:40,time:70,art:true},
-  biabTips:{label:"BIAB — With Tips",price:55,time:85,art:true},
-  shellac:{label:"Shellac Manicure",price:30,time:40},
-  infill:{label:"Acrylic Infill",price:40,time:80,art:true,infill:true},
-  foreignInfill:{label:"Foreign Acrylic Infill",price:50,time:95,art:true,infill:true},
+  acrylic:{label:"Acrylic Full Set",price:60,time:105,acrylic:true,art:true},
+  biabNatural:{label:"BIAB — Natural Nails",price:50,time:70,art:true},
+  biabTips:{label:"BIAB — With Tips",price:60,time:85,art:true},
+  shellac:{label:"Shellac Manicure",price:35,time:40},
+  infill:{label:"Acrylic Infill",price:55,time:80,art:true,infill:true},
+  foreignInfill:{label:"Foreign Acrylic Infill",price:60,time:95,art:true,infill:true},
   soakoff:{label:"Soak Off",price:25,time:40,removalOnly:true},
   foreignSoakoff:{label:"Foreign Soak Off",price:30,time:40,removalOnly:true}
 };
