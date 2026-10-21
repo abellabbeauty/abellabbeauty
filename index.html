@@ -777,12 +777,11 @@ footer{background:linear-gradient(90deg,#f7d2d6,#f9dce0);padding:24px 0}
   <div class="step"><h3>4. YOUR DETAILS</h3><div class="two"><div class="field"><label>Full name</label><input id="name" required><div id="nameError" class="field-error">Please enter your full name.</div></div><div class="field"><label>Phone</label><input id="phone" required><div id="phoneError" class="field-error">Please enter your phone number.</div></div></div><div class="field"><label>Email</label><input id="email" type="email" required><div id="emailError" class="field-error">Please enter a valid email address.</div></div><div class="field"><label>Nail inspo / notes</label><textarea id="notes"></textarea></div><div class="field"><label>Upload nail inspo</label><input id="inspo" type="file" accept="image/*"></div></div>
   <div class="step"><h3>5. DEPOSIT</h3>
       <div class="checkout-card">
-        <span class="test-badge">TESTING MODE</span>
-        <h4>$20 deposit required to secure your appointment</h4>
-        <div class="checkout-sub">When payments go live, your appointment will only be secured after the $20 deposit is successfully paid.</div>
+                <h4>$20 deposit required to secure your appointment</h4>
+        <div class="checkout-sub">Your appointment will be secured once the $20 deposit is successfully paid.</div>
         <div class="deposit-due">
           <strong>Card / Apple Pay</strong>
-          <small>Stripe checkout will be connected here before launch.</small>
+          <small>Secure payment via Stripe.</small>
         </div>
       </div>
     </div>
@@ -1347,8 +1346,7 @@ function review(){
     <div class="review-line"><span>Name</span><strong>${document.getElementById("name").value.trim()}</strong></div>
     <div class="review-line"><span>Email</span><strong>${document.getElementById("email").value.trim()}</strong></div>
     <div class="checkout-card">
-      <span class="test-badge">TESTING MODE</span>
-      <h4>Deposit & payment</h4>
+            <h4>Deposit & payment</h4>
       <div class="checkout-money">
         <div><span>Total</span><strong>${money(c.price)}</strong></div>
         <div><span>Due now</span><strong>$20</strong></div>
@@ -1360,7 +1358,7 @@ function review(){
       </div>
       <button class="btn" id="stripeCheckoutBtn" style="width:100%;margin-top:12px" onclick="startStripeCheckout()">PAY $20 DEPOSIT & SECURE BOOKING</button>
       <div class="secure-note">
-        Stripe is currently in <strong>Sandbox</strong> while we finish testing. Your appointment is only confirmed after Stripe reports that the $20 deposit was successfully paid.
+        Your appointment is only confirmed after the $20 deposit has been successfully paid.
       </div>
     </div>
   </div>`;
@@ -1514,16 +1512,16 @@ async function saveBooking(){
     box.classList.remove("hidden");
     box.innerHTML=`<div class="confirm-screen">
       <div class="confirm-heart">♡</div>
-      <h3>Test booking saved ♡</h3>
-      <p>Your appointment has been saved to the live booking database.</p>
+      <h3>Booking saved ♡</h3>
+      <p>Your appointment has been saved.</p>
       <div class="confirm-details">
         <div class="review-line"><span>Appointment</span><strong>${c.service}</strong></div>
         <div class="review-line"><span>Date</span><strong>${nice(pd(state.date))}</strong></div>
         <div class="review-line"><span>Time</span><strong>${state.time}</strong></div>
-        <div class="review-line"><span>Deposit</span><strong>Not paid yet</strong></div>
+        <div class="review-line"><span>Deposit</span><strong>Pending</strong></div>
         <div class="review-line"><span>Booking ID</span><strong style="word-break:break-all">${bookingId||"Saved"}</strong></div>
       </div>
-      <p style="margin-top:16px">This appointment is saved for testing only. No deposit has been charged. Before launch, only a successful $20 Stripe payment will secure a client appointment.</p>
+      <p style="margin-top:16px">Your appointment is only secured once the $20 deposit has been successfully paid.</p>
       <a class="btn" href="#homeView" style="margin-top:8px;display:inline-flex">BACK TO HOME</a>
     </div>`;
     box.scrollIntoView({behavior:"smooth",block:"center"});
@@ -1531,7 +1529,7 @@ async function saveBooking(){
   }catch(err){
     if(btn){
       btn.disabled=false;
-      btn.textContent=originalText||"SAVE TEST BOOKING";
+      btn.textContent=originalText||"SAVE BOOKING";
     }
     const errorBox=document.createElement("div");
     errorBox.className="notice";
