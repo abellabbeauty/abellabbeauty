@@ -941,6 +941,8 @@ const addons={
   simple:{label:"Simple Nail Art",price:2,time:2},
   complex:{label:"Complex Nail Art",price:5,time:5}
 };
+let bookingRequest=null;
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 let state={service:null,full:"none",addons:{},date:null,time:null};
 Object.keys(addons).forEach(k=>state.addons[k]=0);
 
@@ -958,22 +960,14 @@ function pd(k){
 }
 function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x}
 function nice(d){return d.toLocaleDateString("en-AU",{weekday:"short",day:"numeric",month:"short"})}
-function hours(d){
-  if(d.getDay()===1)return{open:540,close:1020};
-  if(d.getDay()===4)return{open:540,close:915};
-  return null;
-}
+function hours(d){return null;}
 function ctime(min){
   let h=Math.floor(min/60),m=min%60,ap=h>=12?"pm":"am";
   h=h%12||12;
   return `${h}:${String(m).padStart(2,"0")} ${ap}`;
 }
 
-function defaultWindowsForDate(d){
-  if(d.getDay()===1)return[{start:540,end:1020}];
-  if(d.getDay()===4)return[{start:540,end:915}];
-  return[];
-}
+function defaultWindowsForDate(d){return [];}
 function localMinutesFromISO(iso){
   const dt=new Date(iso);
   const parts=new Intl.DateTimeFormat("en-AU",{
@@ -1132,7 +1126,7 @@ async function renderDates(){
     const rangeEnd=sydneyDayRange(dkey(latest)).end;
     overrides=await fetchOverrides(rangeStart,rangeEnd);
   }catch(err){
-    g.innerHTML=`<div class="notice" style="grid-column:1/-1">Couldn’t load live dates. Please refresh and try again.<br><small>${err.message}</small></div>`;
+    g.innerHTML=`<div class="notice" style="grid-column:1/-1">Couldn’t load live dates. Please refresh and try again.<br><small>${esc(err.message)}</small></div>`;
     return;
   }
 
@@ -1187,7 +1181,7 @@ async function renderTimes(){
     overrides=overrides||[];
   }catch(err){
     a.className="notice";
-    a.innerHTML=`Couldn’t load live availability. Please refresh and try again.<br><small>${err.message}</small>`;
+    a.innerHTML=`Couldn’t load live availability. Please refresh and try again.<br><small>${esc(err.message)}</small>`;
     return;
   }
 
@@ -1344,8 +1338,8 @@ function review(){
     <div class="review-line"><span>Time</span><strong>${state.time}</strong></div>
     <div class="review-line"><span>Estimated duration</span><strong>${fmt(c.time)}</strong></div>
     <div class="review-line"><span>Total</span><strong>${money(c.price)}</strong></div>
-    <div class="review-line"><span>Name</span><strong>${document.getElementById("name").value.trim()}</strong></div>
-    <div class="review-line"><span>Email</span><strong>${document.getElementById("email").value.trim()}</strong></div>
+    <div class="review-line"><span>Name</span><strong>${esc(document.getElementById("name").value.trim())}</strong></div>
+    <div class="review-line"><span>Email</span><strong>${esc(document.getElementById("email").value.trim())}</strong></div>
     <button class="btn" id="saveBookingBtn" type="button" style="width:100%;margin-top:16px" onclick="saveBooking()">CONFIRM BOOKING</button>
     <div class="secure-note" style="margin-top:10px">
       Your appointment will be added to the booking calendar once confirmed.
@@ -1402,18 +1396,31 @@ async function saveBooking(){
   };
 
   try{
-    const bookingId=await supabaseRpc("create_booking",{
-      p_client_name:document.getElementById("name").value.trim(),
-      p_client_email:document.getElementById("email").value.trim(),
-      p_client_phone:document.getElementById("phone").value.trim(),
-      p_service_name:c.service,
-      p_service_details:serviceDetails,
-      p_start_at:sydneyLocalToISO(state.date,state.time),
-      p_duration_minutes:c.time,
-      p_total_price:c.price,
-      p_notes:document.getElementById("notes").value.trim()||null,
-      p_inspo_url:null
+    const payload={
+      client_name:document.getElementById("name").value.trim(),
+      client_email:document.getElementById("email").value.trim(),
+      client_phone:document.getElementById("phone").value.trim(),
+      service_key:state.service,
+      full_design:services[state.service].art?state.full:"none",
+      addons:services[state.service].art?state.addons:{},
+      removal:services[state.service].removalOnly?"none":removal,
+      start_at:sydneyLocalToISO(state.date,state.time),
+      notes:document.getElementById("notes").value.trim()||null,
+      agreed_to_policies:document.getElementById("agree").checked
+    };
+    const signature=JSON.stringify(payload);
+    if(!bookingRequest||bookingRequest.signature!==signature)bookingRequest={signature,id:crypto.randomUUID()};
+    const response=await fetch(`${SUPABASE_URL}/functions/v1/create-booking`,{
+      method:"POST",headers:{apikey:SUPABASE_PUBLISHABLE_KEY,"Content-Type":"application/json"},
+      body:JSON.stringify({...payload,request_id:bookingRequest.id})
     });
+    const result=await response.json();
+    if(!response.ok)throw new Error(result.error||result.message||"Could not save booking. Please try again.");
+    if(result.booking_status!=="confirmed"||!result.booking_id)throw new Error("Booking confirmation was not received. Please try again.");
+    const bookingId=result.booking_id;
+    const emailNotice=result.confirmation_email_status==="sent"
+      ? "Your confirmation email has been sent. Please check your inbox and junk folder."
+      : "Your appointment is confirmed, but the confirmation email could not be sent. Please save these details and contact abellabbeauty for your appointment location.";
 
     const box=document.getElementById("confirmationBox");
     document.getElementById("reviewBox").classList.add("hidden");
@@ -1421,7 +1428,7 @@ async function saveBooking(){
     box.innerHTML=`<div class="confirm-screen">
       <div class="confirm-heart">♡</div>
       <h3>Booking confirmed ♡</h3>
-      <p>Your appointment has been booked successfully.</p>
+      <p>${emailNotice}</p>
       <div class="confirm-details">
         <div class="review-line"><span>Appointment</span><strong>${c.service}</strong></div>
         <div class="review-line"><span>Date</span><strong>${nice(pd(state.date))}</strong></div>
@@ -1442,7 +1449,7 @@ async function saveBooking(){
     const errorBox=document.createElement("div");
     errorBox.className="notice";
     errorBox.style.marginTop="10px";
-    errorBox.innerHTML=`<strong>Couldn’t save booking.</strong><br>${err.message}`;
+    errorBox.innerHTML=`<strong>Couldn’t save booking.</strong><br>${esc(err.message)}`;
     btn.parentNode.insertBefore(errorBox,btn.nextSibling);
 
     if(/taken|unavailable/i.test(err.message)){

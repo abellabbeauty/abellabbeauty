@@ -418,10 +418,7 @@ function openBooking(id){
     ? details.addons.map(a=>`${esc(a.name)}${a.quantity?` ×${a.quantity}`:""}`).join(", ")
     : "";
   const total=Number(b.total_price||0);
-  const deposit=Number(b.deposit_amount||20);
-  const remaining=Math.max(0,total-deposit);
   const statusClass=esc(b.booking_status||"pending");
-  const paymentLabel=(b.payment_status==="paid")?"Deposit paid":(b.payment_status==="refunded"?"Deposit refunded":"Deposit unpaid");
 
   openDrawer(`
     <div class="panelhead">
@@ -442,15 +439,13 @@ function openBooking(id){
 
     <div class="summaryStrip">
       <div><span>Total</span><strong>${total.toLocaleString("en-AU",{style:"currency",currency:"AUD"})}</strong></div>
-      <div><span>Deposit</span><strong>${deposit.toLocaleString("en-AU",{style:"currency",currency:"AUD"})}</strong></div>
-      <div><span>Remaining</span><strong>${remaining.toLocaleString("en-AU",{style:"currency",currency:"AUD"})}</strong></div>
     </div>
 
-    <div class="compactCard">
-      <h3>Payment</h3>
-      <p><strong style="color:var(--ink)">${esc(paymentLabel)}</strong>${b.payment_status==="unpaid"?" · testing mode":""}</p>
-    </div>
 
+
+    <div class="compactCard"><h3>Confirmation email</h3><p>${esc(b.confirmation_email_status||"Not sent")}</p>
+      ${b.confirmation_email_status!=="sent"&&b.booking_status==="confirmed"?`<button class="btn small" onclick="retryEmail('${b.id}')">Resend confirmation</button>`:""}
+    </div>
     <div class="contactGrid">
       <div><span>Email</span><strong>${esc(b.client_email)}</strong></div>
       <div><span>Phone</span><strong>${esc(b.client_phone)}</strong></div>
@@ -466,13 +461,6 @@ function openBooking(id){
       <button class="btn danger small" onclick="updateBooking('${b.id}',{booking_status:'cancelled'})">Cancel</button>
     </div>
 
-    <div class="sectiontitle">Deposit status</div>
-    <div class="actions">
-      <button class="btn small" onclick="updateBooking('${b.id}',{payment_status:'paid'})">Mark paid</button>
-      <button class="btn secondary small" onclick="updateBooking('${b.id}',{payment_status:'unpaid'})">Mark unpaid</button>
-      <button class="btn danger small" onclick="updateBooking('${b.id}',{payment_status:'refunded'})">Refunded</button>
-    </div>
-
     <div class="stickyActions">
       <div class="actions">
         <button class="btn" onclick="updateBooking('${b.id}',{booking_status:'confirmed'})">CONFIRM BOOKING</button>
@@ -480,6 +468,11 @@ function openBooking(id){
       </div>
     </div>
   `);
+}
+async function retryEmail(id){
+  try{const r=await api("/functions/v1/create-booking",{method:"POST",body:JSON.stringify({action:"retry_email",booking_id:id})});
+  if(r.confirmation_email_status!=="sent")throw new Error("Email could not be sent. Please check the email provider configuration.");
+  await loadWeek();openBooking(id);}catch(err){alert(err.message)}
 }
 async function updateBooking(id,patch){try{await api(`/rest/v1/bookings?id=eq.${id}`,{method:"PATCH",headers:{Prefer:"return=minimal"},body:JSON.stringify(patch)});closeDrawer();await loadWeek()}catch(err){alert(err.message)}}
 if(accessToken)showApp();
