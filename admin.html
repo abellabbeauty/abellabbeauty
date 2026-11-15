@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>abellabbeauty admin</title>
 <style>
-:root{--cream:#fffaf7;--panel:#ffffff;--pink:#f2bcc4;--pink2:#fdecef;--deep:#7e2835;--ink:#1b1517;--muted:#75666a;--line:#ead9dc;--green:#2f7d5a;--red:#b8485b;--amber:#a46b18;--slot:64px}
+:root{--cream:#fffaf7;--panel:#ffffff;--pink:#f2bcc4;--pink2:#fdecef;--deep:#7e2835;--ink:#1b1517;--muted:#75666a;--line:#ead9dc;--green:#2f7d5a;--red:#b8485b;--amber:#a46b18;--slot:36px;--time-col:60px}
 *{box-sizing:border-box}
 body{margin:0;background:var(--cream);color:var(--ink);font-family:Arial,Helvetica,sans-serif}
 button,input,select,textarea{font:inherit} button{cursor:pointer}
@@ -44,24 +44,24 @@ main{width:min(1180px,calc(100% - 16px));margin:14px auto 40px}
 .diaryHeadSub{font-size:.76rem;color:var(--muted);margin-top:2px}
 .addBtn{border:0;background:var(--pink2);color:var(--deep);border-radius:10px;padding:10px 13px;font-weight:800}
 .timeline{position:relative}
-.slot{display:grid;grid-template-columns:72px 1fr;min-height:var(--slot);border-bottom:1px solid #f2e8ea}
+.slot{display:grid;grid-template-columns:var(--time-col) 1fr;min-height:var(--slot);border-bottom:1px solid #f2e8ea}
 .timeLabel{padding:8px 8px 0 10px;font-size:.75rem;color:var(--muted);text-align:right}
 .slotBody{position:relative;border-left:1px solid var(--line);min-height:var(--slot)}
 .slotBody::after{content:"";position:absolute;left:0;right:0;top:50%;border-top:1px dashed #f5ecee}
 
 .weekWrap{overflow-x:auto;-webkit-overflow-scrolling:touch;position:relative}
-.weekDiary{min-width:980px;background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden}
-.weekHeader{display:grid;grid-template-columns:70px repeat(7,1fr);position:sticky;top:74px;background:#fffdfa;z-index:12;border-bottom:1px solid var(--line)}
+.weekDiary{width:100%;min-width:0;background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.weekHeader{display:grid;grid-template-columns:var(--time-col) repeat(7,minmax(0,1fr));position:sticky;top:74px;background:#fffdfa;z-index:12;border-bottom:1px solid var(--line)}
 .weekHeader div{padding:10px 6px;text-align:center;border-left:1px solid var(--line)}
 .weekHeader div:first-child{border-left:0;position:sticky;left:0;z-index:15;background:#fffdfa;box-shadow:1px 0 0 var(--line)}
 .weekHeader strong{display:block;font-size:.75rem;text-transform:uppercase;color:var(--muted)}
 .weekHeader span{font:400 1.1rem Georgia,"Times New Roman",serif}
-.weekGrid{position:relative;display:grid;grid-template-columns:70px repeat(7,1fr)}
+.weekGrid{position:relative;display:grid;grid-template-columns:var(--time-col) repeat(7,minmax(0,1fr))}
 .weekTimeCol{position:sticky;left:0;z-index:9;border-right:1px solid var(--line);background:#fffdfa;box-shadow:1px 0 0 var(--line)}
-.weekTime{height:64px;border-bottom:1px solid #f2e8ea;padding:8px 6px;text-align:right;font-size:.7rem;color:var(--muted)}
-.weekDayCol{position:relative;border-right:1px solid var(--line);height:1536px;background:#fff}
+.weekTime{height:var(--slot);border-bottom:1px solid #f2e8ea;padding:8px 6px;text-align:right;font-size:.7rem;color:var(--muted)}
+.weekDayCol{position:relative;border-right:1px solid var(--line);height:calc(24 * var(--slot));background:#fff}
 .weekDayCol:last-child{border-right:0}
-.weekDayCol::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(to bottom,transparent 0,transparent 63px,#f2e8ea 64px)}
+.weekDayCol::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(to bottom,transparent 0,transparent calc(var(--slot) - 1px),#f2e8ea var(--slot))}
 .weekBooking{position:absolute;left:4px;right:4px;border:1px solid #efc9d0;background:#fff6f7;border-radius:10px;padding:5px 6px;z-index:4;overflow:hidden;box-shadow:0 2px 8px rgba(93,45,53,.05)}
 .weekBooking strong{display:block;font-size:.72rem;color:var(--deep);line-height:1.15}
 .weekBooking small{display:block;font-size:.66rem;color:var(--muted);margin-top:2px}
@@ -148,6 +148,54 @@ main{width:min(1180px,calc(100% - 16px));margin:14px auto 40px}
 .weekBooking.completed::after{background:#9681bd}
 .weekSwipeHint{font-size:.72rem;color:var(--muted);text-align:center;margin:0 0 9px}
 
+
+/* Compact diary: shared slot sizing keeps appointments aligned with the grid. */
+.weekHeader div{min-width:0;padding:8px 2px}
+.weekHeader span{font-size:.85rem}
+.weekHeader strong{font-size:.65rem}
+.weekTime{padding:4px 4px;font-size:.65rem}
+.timeLabel{padding-top:4px}
+.weekBooking{left:2px;right:2px;padding:4px 4px 4px 6px;border-radius:6px;text-align:left}
+.weekBooking strong{font-size:.65rem}
+.weekBooking strong span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.weekBooking small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.6rem}
+.booking{padding:5px 8px;text-align:left}
+.booking .badge{padding:2px 5px;margin-top:2px}
+.summaryStrip{grid-template-columns:1fr}
+@media(max-width:700px){
+  :root{--slot:28px;--time-col:44px}
+  .topbar{padding:8px 10px}
+  .brand{font-size:1.2rem}
+  .signout{padding:8px 10px;font-size:.75rem}
+  main{margin-top:8px}
+  .headerRow{gap:6px;margin:4px 0 8px}
+  .headerRow>div:first-child{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .headerRow h1{font-size:1.25rem}
+  .viewToggle{margin-top:0!important;align-self:auto}
+  .viewToggle button{padding:7px 10px;font-size:.72rem}
+  .weekControls{gap:5px}
+  .weekLabel{font-size:.8rem}
+  .dayTabs{gap:3px;margin-bottom:8px}
+  .dayTab{padding:5px 1px;border-radius:8px}
+  .dayTab span{font-size:1rem}
+  .legend{font-size:.62rem;gap:7px;margin:6px 0 8px}
+  .diaryHead{padding:8px}
+  .diaryHeadTitle{font-size:.8rem}
+  .addBtn{padding:8px;font-size:.7rem}
+  .slot{grid-template-columns:var(--time-col) 1fr}
+  .timeLabel,.weekTime{font-size:.56rem;padding:3px 2px 0}
+  .weekHeader{top:0}
+  .weekHeader strong{font-size:.57rem}
+  .weekHeader span{font-size:.65rem}
+  .weekBooking{padding:3px 2px 3px 5px;left:1px;right:1px}
+  .weekBooking strong{font-size:.55rem}
+  .weekBooking small{display:none}
+  .weekSwipeHint{font-size:.65rem;margin-bottom:6px}
+  .booking .badge{display:none}
+  .booking{padding:3px 6px}
+  .booking strong{font-size:.75rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .booking small{font-size:.66rem}
+}
 </style>
 </head>
 <body>
@@ -198,7 +246,7 @@ main{width:min(1180px,calc(100% - 16px));margin:14px auto 40px}
       <div id="timeline" class="timeline"></div>
     </div>
 
-    <div id="weekView" class="weekWrap hidden"><div class="weekSwipeHint">Times stay fixed — swipe sideways to see the rest of the week.</div>
+    <div id="weekView" class="weekWrap hidden"><div class="weekSwipeHint">Your whole week at a glance. Tap an appointment for details.</div>
       <div class="weekDiary">
         <div id="weekHeader" class="weekHeader"></div>
         <div id="weekGrid" class="weekGrid"></div>
@@ -217,7 +265,8 @@ let weekStart=startOfWeek(new Date());
 let selectedDateKey=dkey(new Date());
 let currentView="day";
 let bookings=[],overrides=[];
-const DAY_START=480,DAY_END=1200,SLOT_MIN=30,SLOT_PX=64;
+const DAY_START=480,DAY_END=1200,SLOT_MIN=30;
+let SLOT_PX=parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--slot"));
 
 function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
 function dkey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`}
@@ -301,7 +350,7 @@ function renderDayTabs(){
 function renderTimeline(){
   const [y,m,d]=selectedDateKey.split("-").map(Number),dateObj=new Date(y,m-1,d);
   document.getElementById("selectedDayTitle").textContent=dateObj.toLocaleDateString("en-AU",{weekday:"long",day:"numeric",month:"long"});
-  const dayBookings=bookings.filter(b=>bookingDateKey(b.start_at)===selectedDateKey);
+  const dayBookings=bookings.filter(b=>b.booking_status!=="cancelled"&&bookingDateKey(b.start_at)===selectedDateKey);
   document.getElementById("selectedDaySub").textContent=dayBookings.length?`${dayBookings.length} appointment${dayBookings.length===1?"":"s"}`:"No appointments";
   const timeline=document.getElementById("timeline");timeline.innerHTML="";
   const slotCount=(DAY_END-DAY_START)/SLOT_MIN;
@@ -311,7 +360,7 @@ function renderTimeline(){
     slot.innerHTML=`<div class="timeLabel">${minsLabel(mins)}</div><div class="slotBody" onclick="quickAdd('${selectedDateKey}','${String(Math.floor(mins/60)).padStart(2,"0")}:${String(mins%60).padStart(2,"0")}')"></div>`;
     timeline.appendChild(slot);
   }
-  const bodyLeft=72;
+  const bodyLeft=parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--time-col"));
   for(const o of overrides.filter(x=>selectedDateKey>=bookingDateKey(x.start_at)&&selectedDateKey<=bookingDateKey(new Date(new Date(x.end_at).getTime()-1).toISOString()))){
     const start=Math.max(DAY_START,bookingMinutes(o.start_at)),end=Math.min(DAY_END,bookingMinutes(o.end_at));
     if(end<=DAY_START||start>=DAY_END)continue;
@@ -323,8 +372,8 @@ function renderTimeline(){
   }
   for(const b of dayBookings){
     const start=bookingMinutes(b.start_at),end=bookingMinutes(b.end_at);if(end<=DAY_START||start>=DAY_END)continue;
-    const card=document.createElement("button");card.className="booking";
-    card.style.left=`${bodyLeft+8}px`;card.style.top=`${((start-DAY_START)/SLOT_MIN)*SLOT_PX+4}px`;card.style.height=`${Math.max(52,((end-start)/SLOT_MIN)*SLOT_PX-8)}px`;
+    const card=document.createElement("button");card.className=`booking ${b.booking_status||"pending"}`;
+    card.style.left=`${bodyLeft+8}px`;card.style.top=`${((start-DAY_START)/SLOT_MIN)*SLOT_PX+4}px`;card.style.height=`${Math.max(28,((end-start)/SLOT_MIN)*SLOT_PX-4)}px`;
     card.onclick=()=>openBooking(b.id);
     card.innerHTML=`<strong>${bookingTime(b.start_at)} · ${esc(b.client_name)}</strong><small>${esc(b.service_name)}</small><span class="badge ${esc(b.booking_status)}">${esc(b.booking_status)}</span>`;
     timeline.appendChild(card);
@@ -363,11 +412,13 @@ function renderWeekView(){
       band.textContent=o.override_type==="open"?"OPEN":"CLOSED";
       band.onclick=(e)=>{e.stopPropagation();selectedDateKey=key;openDay(key)};col.appendChild(band);
     });
-    bookings.filter(b=>bookingDateKey(b.start_at)===key).forEach(b=>{
+    bookings.filter(b=>b.booking_status!=="cancelled"&&bookingDateKey(b.start_at)===key).forEach(b=>{
       const start=bookingMinutes(b.start_at),end=bookingMinutes(b.end_at);if(end<=DAY_START||start>=DAY_END)return;
       const card=document.createElement("button");card.className=`weekBooking ${b.booking_status||"pending"}`;
-      card.style.top=`${((start-DAY_START)/SLOT_MIN)*SLOT_PX+4}px`;card.style.height=`${Math.max(42,((end-start)/SLOT_MIN)*SLOT_PX-8)}px`;
-      card.innerHTML=`<strong>${bookingTime(b.start_at)}<br>${esc(b.client_name)}</strong><small>${esc(b.service_name)}</small>`;
+      card.style.top=`${((start-DAY_START)/SLOT_MIN)*SLOT_PX+4}px`;card.style.height=`${Math.max(24,((end-start)/SLOT_MIN)*SLOT_PX-4)}px`;
+      card.setAttribute("aria-label",`${bookingTime(b.start_at)} · ${b.client_name} · ${b.service_name}`);
+      card.title=`${bookingTime(b.start_at)} · ${b.client_name} · ${b.service_name}`;
+      card.innerHTML=`<strong><span>${bookingTime(b.start_at)}</span><span>${esc(b.client_name)}</span></strong><small>${esc(b.service_name)}</small>`;
       card.onclick=(e)=>{e.stopPropagation();openBooking(b.id)};col.appendChild(card);
     });
     grid.appendChild(col);
@@ -475,6 +526,7 @@ async function retryEmail(id){
   await loadWeek();openBooking(id);}catch(err){alert(err.message)}
 }
 async function updateBooking(id,patch){try{await api(`/rest/v1/bookings?id=eq.${id}`,{method:"PATCH",headers:{Prefer:"return=minimal"},body:JSON.stringify(patch)});closeDrawer();await loadWeek()}catch(err){alert(err.message)}}
+window.addEventListener("resize",()=>{const size=parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--slot"));if(size!==SLOT_PX){SLOT_PX=size;if(accessToken)renderAll();}});
 if(accessToken)showApp();
 </script>
 </body>
