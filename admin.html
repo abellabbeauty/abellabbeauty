@@ -196,6 +196,18 @@ main{width:min(1180px,calc(100% - 16px));margin:14px auto 40px}
   .booking strong{font-size:.75rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .booking small{font-size:.66rem}
 }
+
+.timeline,.weekDayCol{background:#b8a2ab}
+.availabilityWindow{position:absolute;left:0;right:0;background:#fff;z-index:0;pointer-events:none}
+.slot{position:relative;z-index:1}
+.slotBody::after{pointer-events:none}
+.timeLabel{background:#fffdfa}
+.weekDayCol::before{z-index:1;pointer-events:none}
+.dayTab small,.weekHeader small{display:block;font-size:.58rem;font-weight:700;margin-top:3px}
+.dayTab.dayClosed,.weekHeader .dayClosed{background:#d4c5cb;color:#59434c}
+.dayTab.dayOpen,.weekHeader .dayOpen{background:#f3fbf6}
+.dayTab.active{box-shadow:inset 0 0 0 2px var(--deep)}
+@media(max-width:700px){.dayTab small,.weekHeader small{font-size:.5rem}}
 </style>
 </head>
 <body>
@@ -234,8 +246,8 @@ main{width:min(1180px,calc(100% - 16px));margin:14px auto 40px}
     <div class="legend">
       <span><span class="dot" style="background:#fff0d9"></span>Pending</span>
       <span><span class="dot" style="background:#e8f6ef"></span>Confirmed</span>
-      <span><span class="dot" style="background:#eaf8f0"></span>Open override</span>
-      <span><span class="dot" style="background:#fff0f2"></span>Closed/block</span>
+      <span><span class="dot" style="background:#fff;border:1px solid #aa929b"></span>Available</span>
+      <span><span class="dot" style="background:#b8a2ab"></span>Closed / unavailable</span>
     </div>
 
     <div id="dayView" class="diaryCard">
@@ -264,7 +276,7 @@ let accessToken=sessionStorage.getItem("abella_admin_token")||"";
 let weekStart=startOfWeek(new Date());
 let selectedDateKey=dkey(new Date());
 let currentView="day";
-let bookings=[],overrides=[];
+let bookings=[],overrides=[],calendarAvailability=[],calendarBusy=[];
 const DAY_START=480,DAY_END=1200,SLOT_MIN=30;
 let SLOT_PX=parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--slot"));
 
@@ -315,14 +327,41 @@ async function showApp(){document.getElementById("loginView").classList.add("hid
 async function loadWeek(){
   const end=addDays(weekStart,7),startISO=sydneyLocalToISO(dkey(weekStart),"00:00"),endISO=sydneyLocalToISO(dkey(end),"00:00");
   try{
-    const [b,o]=await Promise.all([
+    const [b,o,a,busy]=await Promise.all([
       api(`/rest/v1/bookings?select=*&start_at=gte.${encodeURIComponent(startISO)}&start_at=lt.${encodeURIComponent(endISO)}&order=start_at.asc`),
-      api(`/rest/v1/availability_overrides?select=*&start_at=lt.${encodeURIComponent(endISO)}&end_at=gt.${encodeURIComponent(startISO)}&order=start_at.asc`)
+      api(`/rest/v1/availability_overrides?select=*&start_at=lt.${encodeURIComponent(endISO)}&end_at=gt.${encodeURIComponent(startISO)}&order=start_at.asc`),
+      api("/rest/v1/rpc/get_availability_overrides",{method:"POST",body:JSON.stringify({range_start:startISO,range_end:endISO})}),
+      api("/rest/v1/rpc/get_busy_times",{method:"POST",body:JSON.stringify({range_start:startISO,range_end:endISO})})
     ]);
-    bookings=b||[];overrides=o||[];renderAll();
+    bookings=b||[];overrides=o||[];calendarAvailability=a||[];calendarBusy=busy||[];renderAll();
   }catch(err){if(/jwt|token|auth/i.test(err.message))return logout();alert("Could not load calendar: "+err.message)}
 }
 
+
+function dayIntervals(key,periods){
+ const start=new Date(sydneyLocalToISO(key,"00:00")).getTime();
+ return periods.map(p=>({start:Math.max(0,(new Date(p.start_at)-start)/60000),end:Math.min(1440,(new Date(p.end_at)-start)/60000)})).filter(p=>p.end>p.start);
+}
+function mergeIntervals(periods){
+ const result=[];for(const p of periods.slice().sort((a,b)=>a.start-b.start)){
+ const last=result[result.length-1];if(last&&p.start<=last.end)last.end=Math.max(last.end,p.end);else result.push({...p});
+ }return result;
+}
+function subtractIntervals(open,closed){
+ let result=mergeIntervals(open);
+ for(const c of mergeIntervals(closed))result=result.flatMap(p=>c.end<=p.start||c.start>=p.end?[p]:[...(c.start>p.start?[{start:p.start,end:c.start}]:[]),...(c.end<p.end?[{start:c.end,end:p.end}]:[])]);
+ return result;
+}
+function workingWindows(key){return subtractIntervals(dayIntervals(key,calendarAvailability.filter(p=>p.override_type==="open")),dayIntervals(key,calendarAvailability.filter(p=>p.override_type==="closed")));}
+function freeWindows(key){return subtractIntervals(workingWindows(key),dayIntervals(key,calendarBusy));}
+function dayAvailability(key){return !workingWindows(key).length?"Closed":!freeWindows(key).length?"Full":"Open";}
+function paintFreeWindows(container,key,isWeek){
+ for(const p of freeWindows(key)){
+ const start=Math.max(DAY_START,p.start),end=Math.min(DAY_END,p.end);if(end<=start)continue;
+ const band=document.createElement("div");band.className="availabilityWindow";if(!isWeek)band.style.left="var(--time-col)";
+ band.style.top=((start-DAY_START)/SLOT_MIN*SLOT_PX)+"px";band.style.height=((end-start)/SLOT_MIN*SLOT_PX)+"px";container.appendChild(band);
+ }
+}
 function setView(v){
   currentView=v;
   document.getElementById("dayBtn").classList.toggle("active",v==="day");
@@ -341,8 +380,9 @@ function renderDayTabs(){
   const today=dkey(new Date());
   for(let i=0;i<7;i++){
     const d=addDays(weekStart,i),key=dkey(d),btn=document.createElement("button");
-    btn.className="dayTab"+(key===selectedDateKey?" active":"")+(key===today?" today":"");
-    btn.innerHTML=`<strong>${d.toLocaleDateString("en-AU",{weekday:"short"})}</strong><span>${d.getDate()}</span>`;
+    const availability=dayAvailability(key);
+    btn.className="dayTab "+(availability==="Open"?"dayOpen":"dayClosed")+(key===selectedDateKey?" active":"")+(key===today?" today":"");
+    btn.innerHTML=`<strong>${d.toLocaleDateString("en-AU",{weekday:"short"})}</strong><span>${d.getDate()}</span><small>${availability}</small>`;
     btn.onclick=()=>{selectedDateKey=key;renderAll()};
     wrap.appendChild(btn);
   }
@@ -353,6 +393,8 @@ function renderTimeline(){
   const dayBookings=bookings.filter(b=>b.booking_status!=="cancelled"&&bookingDateKey(b.start_at)===selectedDateKey);
   document.getElementById("selectedDaySub").textContent=dayBookings.length?`${dayBookings.length} appointment${dayBookings.length===1?"":"s"}`:"No appointments";
   const timeline=document.getElementById("timeline");timeline.innerHTML="";
+  paintFreeWindows(timeline,selectedDateKey,false);
+  document.getElementById("selectedDaySub").textContent=dayAvailability(selectedDateKey)+" · "+document.getElementById("selectedDaySub").textContent;
   const slotCount=(DAY_END-DAY_START)/SLOT_MIN;
   for(let i=0;i<slotCount;i++){
     const mins=DAY_START+i*SLOT_MIN,slot=document.createElement("div");
@@ -361,15 +403,6 @@ function renderTimeline(){
     timeline.appendChild(slot);
   }
   const bodyLeft=parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--time-col"));
-  for(const o of overrides.filter(x=>selectedDateKey>=bookingDateKey(x.start_at)&&selectedDateKey<=bookingDateKey(new Date(new Date(x.end_at).getTime()-1).toISOString()))){
-    const start=Math.max(DAY_START,bookingMinutes(o.start_at)),end=Math.min(DAY_END,bookingMinutes(o.end_at));
-    if(end<=DAY_START||start>=DAY_END)continue;
-    const band=document.createElement("div");
-    band.className=`overrideBand ${o.override_type}`;
-    band.style.left=`${bodyLeft+4}px`;band.style.top=`${((start-DAY_START)/SLOT_MIN)*SLOT_PX+2}px`;band.style.height=`${Math.max(22,((end-start)/SLOT_MIN)*SLOT_PX-4)}px`;
-    band.textContent=`${o.override_type==="open"?"OPEN":"CLOSED"} · ${bookingTime(o.start_at)}–${bookingTime(o.end_at)}`;
-    band.onclick=(e)=>{e.stopPropagation();openDay(selectedDateKey)};timeline.appendChild(band);
-  }
   for(const b of dayBookings){
     const start=bookingMinutes(b.start_at),end=bookingMinutes(b.end_at);if(end<=DAY_START||start>=DAY_END)continue;
     const card=document.createElement("button");card.className=`booking ${b.booking_status||"pending"}`;
@@ -385,7 +418,8 @@ function renderWeekView(){
   for(let i=0;i<7;i++){
     const d=addDays(weekStart,i);
     const cell=document.createElement("div");
-    cell.innerHTML=`<strong>${d.toLocaleDateString("en-AU",{weekday:"short"})}</strong><span>${d.getDate()} ${d.toLocaleDateString("en-AU",{month:"short"})}</span>`;
+    const availability=dayAvailability(dkey(d));cell.className=availability==="Open"?"dayOpen":"dayClosed";
+    cell.innerHTML=`<strong>${d.toLocaleDateString("en-AU",{weekday:"short"})}</strong><span>${d.getDate()} ${d.toLocaleDateString("en-AU",{month:"short"})}</span><small>${availability}</small>`;
     header.appendChild(cell);
   }
   const grid=document.getElementById("weekGrid");grid.innerHTML="";
@@ -404,14 +438,7 @@ function renderWeekView(){
       const mins=Math.max(DAY_START,Math.min(DAY_END-30,DAY_START+Math.round((y/SLOT_PX)*SLOT_MIN/30)*30));
       selectedDateKey=key;openDay(key,`${String(Math.floor(mins/60)).padStart(2,"0")}:${String(mins%60).padStart(2,"0")}`);
     };
-    const ovs=overrides.filter(o=>key>=bookingDateKey(o.start_at)&&key<=bookingDateKey(new Date(new Date(o.end_at).getTime()-1).toISOString()));
-    ovs.forEach(o=>{
-      const start=Math.max(DAY_START,bookingMinutes(o.start_at)),end=Math.min(DAY_END,bookingMinutes(o.end_at));if(end<=DAY_START||start>=DAY_END)return;
-      const band=document.createElement("div");band.className=`weekOverride ${o.override_type}`;
-      band.style.top=`${((start-DAY_START)/SLOT_MIN)*SLOT_PX+2}px`;band.style.height=`${Math.max(18,((end-start)/SLOT_MIN)*SLOT_PX-4)}px`;
-      band.textContent=o.override_type==="open"?"OPEN":"CLOSED";
-      band.onclick=(e)=>{e.stopPropagation();selectedDateKey=key;openDay(key)};col.appendChild(band);
-    });
+    paintFreeWindows(col,key,true);
     bookings.filter(b=>b.booking_status!=="cancelled"&&bookingDateKey(b.start_at)===key).forEach(b=>{
       const start=bookingMinutes(b.start_at),end=bookingMinutes(b.end_at);if(end<=DAY_START||start>=DAY_END)return;
       const card=document.createElement("button");card.className=`weekBooking ${b.booking_status||"pending"}`;
