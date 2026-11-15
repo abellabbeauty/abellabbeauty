@@ -739,6 +739,17 @@ footer{background:linear-gradient(90deg,#f7d2d6,#f9dce0);padding:24px 0}
   }
 }
 
+
+.compact-footer{padding:22px 0 18px;border-top:1px solid var(--border)}
+.compact-footer h2{font:400 1.2rem Georgia,"Times New Roman",serif;margin:0 0 10px;text-transform:uppercase}
+.compact-policies{display:grid;grid-template-columns:1fr 1fr;gap:12px 28px;font-size:.82rem;color:var(--muted)}
+.compact-policies p{margin:0;line-height:1.55}
+.compact-policies strong{color:var(--ink);display:block;margin-bottom:2px}
+.compact-contact{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:16px;padding-top:14px;border-top:1px solid #e6bdc5;font-size:.82rem}
+.compact-contact .btn{padding:9px 15px;font-size:.75rem;white-space:nowrap}
+#booking-info{scroll-margin-top:86px}
+@media(max-width:560px){.compact-footer{padding:18px 0}.compact-footer h2{font-size:1rem;margin-bottom:9px}.compact-policies{grid-template-columns:1fr;gap:9px;font-size:.78rem}.compact-policies strong{display:inline;margin-right:4px}.compact-contact{font-size:.73rem;gap:10px;margin-top:12px;padding-top:12px}.compact-contact>a:first-child{max-width:64%}.compact-contact .btn{padding:8px 12px;min-height:0}}
+
 </style>
 </head>
 <body>
@@ -747,7 +758,7 @@ footer{background:linear-gradient(90deg,#f7d2d6,#f9dce0);padding:24px 0}
   <a class="logo" href="#" >abellabbeauty</a>
   <nav class="navlinks">
     <a href="#" >Home</a>
-    <a href="#services" >Services</a>
+    <a href="#bookingView" >Services</a>
     <a href="#work" >My Work</a>
     <a href="#booking-info" >Booking Info</a>
     <a href="#contact" >Contact</a>
@@ -766,15 +777,7 @@ footer{background:linear-gradient(90deg,#f7d2d6,#f9dce0);padding:24px 0}
   </div></div>
 </section>
 
-<section class="section" id="services"><div class="wrap">
-  <div class="section-title"><h2>SERVICES</h2><div class="line"></div></div>
-  <div class="service-grid">
-    <div class="service"><div>♡</div><h3>BIAB</h3><strong>from $55</strong><p>Overlay, tips or infills.</p></div>
-    <div class="service"><div>♡</div><h3>SHELLAC</h3><strong>$35</strong><p>Glossy colour on natural nails.</p></div>
-    <div class="service"><div>♡</div><h3>SOAK OFF</h3><strong>from $25</strong><p>Removal of existing product.</p></div>
-  </div>
-  <div style="text-align:center;margin-top:26px"><a class="btn btn-outline" href="#bookingView" href="#bookingView">VIEW ALL SERVICES & ADD-ONS →</a></div>
-</div></section>
+
 
 <section class="section" id="work" style="background:#fff9f6"><div class="wrap">
   <div class="section-title"><h2>MY WORK</h2><div class="line"></div></div>
@@ -783,19 +786,9 @@ footer{background:linear-gradient(90deg,#f7d2d6,#f9dce0);padding:24px 0}
   </div>
 </div></section>
 
-<section class="section" id="booking-info"><div class="wrap">
-  <div class="section-title"><h2>BOOKING INFO</h2><div class="line"></div></div>
-  <div class="info-grid">
-    <div class="info"><div>◷</div><h3>24 Hour Policy</h3><p>Please give at least 24 hours’ notice to cancel or reschedule.</p></div>
-    <div class="info"><div>♡</div><h3>7 Day Warranty</h3><p>Eligible lifting or breakage within 7 days can be repaired free.</p></div>
-  </div>
-</div></section>
 
-<footer id="contact"><div class="wrap footer">
-  <a href="https://instagram.com/abellabbeauty" target="_blank">@abellabbeauty · DM for enquiries</a>
-  <div style="font-size:1.6rem;color:#d87685">♡</div>
-  <a class="btn" href="#bookingView">BOOK NOW</a>
-</div></footer>
+
+
 </div>
 
 <div id="bookingView" style="display:block">
@@ -838,6 +831,19 @@ footer{background:linear-gradient(90deg,#f7d2d6,#f9dce0);padding:24px 0}
 </div></section>
 </div>
 
+
+<footer id="contact" class="compact-footer">
+  <div class="wrap">
+    <section id="booking-info" aria-labelledby="booking-info-title">
+      <h2 id="booking-info-title">Booking info</h2>
+      <div class="compact-policies">
+        <p><strong>24-hour notice</strong> Please give at least 24 hours’ notice to cancel or reschedule.</p>
+        <p><strong>7-day warranty</strong> Eligible lifting or breakage within 7 days can be repaired free.</p>
+      </div>
+    </section>
+    <div class="compact-contact"><a href="https://instagram.com/abellabbeauty" target="_blank" rel="noopener">@abellabbeauty · DM for enquiries</a><a class="btn" href="#bookingView">BOOK NOW</a></div>
+  </div>
+</footer>
 
 <script>
 const SUPABASE_URL="https://bxntbajgmpmalmqdxqiv.supabase.co";
