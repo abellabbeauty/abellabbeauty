@@ -750,6 +750,9 @@ footer{background:linear-gradient(90deg,#f7d2d6,#f9dce0);padding:24px 0}
 #booking-info{scroll-margin-top:86px}
 @media(max-width:560px){.compact-footer{padding:18px 0}.compact-footer h2{font-size:1rem;margin-bottom:9px}.compact-policies{grid-template-columns:1fr;gap:9px;font-size:.78rem}.compact-policies strong{display:inline;margin-right:4px}.compact-contact{font-size:.73rem;gap:10px;margin-top:12px;padding-top:12px}.compact-contact>a:first-child{max-width:64%}.compact-contact .btn{padding:8px 12px;min-height:0}}
 
+/* Keep the appointment summary after all booking selections and details. */
+#bookingView .booking-layout{grid-template-columns:minmax(0,1fr)}
+#bookingView .summary{order:0;position:static;top:auto;width:100%}
 </style>
 </head>
 <body>
