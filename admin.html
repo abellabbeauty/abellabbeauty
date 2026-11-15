@@ -208,6 +208,19 @@ main{width:min(1180px,calc(100% - 16px));margin:14px auto 40px}
 .dayTab.dayOpen,.weekHeader .dayOpen{background:#f3fbf6}
 .dayTab.active{box-shadow:inset 0 0 0 2px var(--deep)}
 @media(max-width:700px){.dayTab small,.weekHeader small{font-size:.5rem}}
+.hoursList{display:grid;gap:10px}
+.hoursIntro{font-size:.78rem;line-height:1.5;color:var(--muted);margin:0 0 2px}
+.hoursCard{background:#fff;border:1px solid var(--line);border-radius:14px;padding:13px}
+.hoursCardHead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.hoursCardHead>strong{font-size:.9rem}
+.exactHours>span,.freeHours>span{display:block;font-size:.68rem;color:var(--muted);margin-bottom:4px}
+.exactHours>strong{display:block;font-size:1rem;line-height:1.5;color:var(--deep)}
+.freeHours{margin-top:9px;padding-top:9px;border-top:1px solid var(--line);font-size:.8rem;line-height:1.5}
+.hoursClosed{background:#fae8ed}
+.hoursClosed .exactHours>strong{font-size:.9rem}
+.currentHours{margin-top:12px;line-height:1.6;background:#fae8ed}
+.diaryHeadSub{max-width:100%;line-height:1.5}
+@media(max-width:700px){.hoursCard{padding:11px}.hoursCardHead>strong{font-size:.82rem}.exactHours>strong{font-size:.92rem}.diaryHead{gap:8px}.diaryHead>div{min-width:0;flex:1}.addBtn{flex-shrink:0}}
 </style>
 </head>
 <body>
@@ -231,6 +244,7 @@ main{width:min(1180px,calc(100% - 16px));margin:14px auto 40px}
         <div class="viewToggle" style="margin-top:8px">
           <button id="dayBtn" class="active" onclick="setView('day')">DAY</button>
           <button id="weekBtn" onclick="setView('week')">WEEK</button>
+          <button id="hoursBtn" onclick="setView('hours')">HOURS</button>
         </div>
       </div>
       <div class="weekControls">
@@ -250,6 +264,7 @@ main{width:min(1180px,calc(100% - 16px));margin:14px auto 40px}
       <span><span class="dot" style="background:#e4a8b7"></span>Closed / unavailable</span>
     </div>
 
+    <div id="hoursView" class="hoursList hidden" aria-label="Weekly opening hours"></div>
     <div id="dayView" class="diaryCard">
       <div class="diaryHead">
         <div><div id="selectedDayTitle" class="diaryHeadTitle"></div><div id="selectedDaySub" class="diaryHeadSub"></div></div>
@@ -364,16 +379,33 @@ function paintFreeWindows(container,key,isWeek){
 }
 function setView(v){
   currentView=v;
+  document.getElementById("hoursBtn").classList.toggle("active",v==="hours");
+  document.getElementById("hoursView").classList.toggle("hidden",v!=="hours");
   document.getElementById("dayBtn").classList.toggle("active",v==="day");
   document.getElementById("weekBtn").classList.toggle("active",v==="week");
   document.getElementById("dayView").classList.toggle("hidden",v!=="day");
   document.getElementById("weekView").classList.toggle("hidden",v!=="week");
   document.getElementById("dayTabs").classList.toggle("hidden",v!=="day");
   if(v==="week")renderWeekView();
+  if(v==="hours")renderHours();
 }
 function renderAll(){
   document.getElementById("weekLabel").textContent=`${fmtMonthDay(weekStart)} – ${fmtMonthDay(addDays(weekStart,6))}`;
-  renderDayTabs();renderTimeline();if(currentView==="week")renderWeekView();
+  renderDayTabs();renderTimeline();if(currentView==="week")renderWeekView();if(currentView==="hours")renderHours();
+}
+function hoursText(periods){return periods.map(p=>minsLabel(p.start)+" – "+minsLabel(p.end)).join(", ");}
+function renderHours(){
+  const list=document.getElementById("hoursView");list.innerHTML='<p class="hoursIntro">Exact opening hours for this week. Unbooked windows exclude appointments, blocks and booking buffers.</p>';
+  for(let i=0;i<7;i++){
+    const d=addDays(weekStart,i),key=dkey(d),open=workingWindows(key),free=freeWindows(key);
+    const card=document.createElement("section");card.className="hoursCard"+(!open.length?" hoursClosed":"");
+    const label=d.toLocaleDateString("en-AU",{weekday:"long",day:"numeric",month:"short"});
+    card.innerHTML=`<div class="hoursCardHead"><strong>${label}</strong><button class="btn secondary small" type="button">Edit hours</button></div>
+      <div class="exactHours"><span>Opening hours</span><strong>${open.length?hoursText(open):"Closed all day"}</strong></div>
+      ${open.length?`<div class="freeHours"><span>Unbooked windows</span><div>${free.length?hoursText(free):"Fully booked / blocked"}</div></div>`:""}`;
+    card.querySelector("button").onclick=()=>{selectedDateKey=key;openDay(key)};
+    list.appendChild(card);
+  }
 }
 function renderDayTabs(){
   const wrap=document.getElementById("dayTabs");wrap.innerHTML="";
@@ -394,7 +426,7 @@ function renderTimeline(){
   document.getElementById("selectedDaySub").textContent=dayBookings.length?`${dayBookings.length} appointment${dayBookings.length===1?"":"s"}`:"No appointments";
   const timeline=document.getElementById("timeline");timeline.innerHTML="";
   paintFreeWindows(timeline,selectedDateKey,false);
-  document.getElementById("selectedDaySub").textContent=dayAvailability(selectedDateKey)+" · "+document.getElementById("selectedDaySub").textContent;
+  document.getElementById("selectedDaySub").textContent=(workingWindows(selectedDateKey).length?"Open: "+hoursText(workingWindows(selectedDateKey)):"Closed all day")+" · "+document.getElementById("selectedDaySub").textContent;
   const slotCount=(DAY_END-DAY_START)/SLOT_MIN;
   for(let i=0;i<slotCount;i++){
     const mins=DAY_START+i*SLOT_MIN,slot=document.createElement("div");
@@ -464,6 +496,7 @@ function openDay(dateKey,prefill="09:00"){
   const [hh,mm]=prefill.split(":").map(Number),endMin=Math.min(hh*60+mm+60,23*60+45),end24=`${String(Math.floor(endMin/60)).padStart(2,"0")}:${String(endMin%60).padStart(2,"0")}`;
   openDrawer(`
     <div class="panelhead"><h2>${esc(dateObj.toLocaleDateString("en-AU",{weekday:"long",day:"numeric",month:"long"}))}</h2><button class="x" onclick="closeDrawer()">×</button></div>
+    <div class="notice currentHours"><strong>Currently open</strong><br>${workingWindows(dateKey).length?hoursText(workingWindows(dateKey)):"Closed all day"}</div>
     <div class="sectiontitle">Open extra availability</div>
     <div class="field"><label>Start</label><input id="openStart" type="time" value="${prefill}" step="900"></div>
     <div class="field"><label>Finish</label><input id="openEnd" type="time" value="${end24}" step="900"></div>
