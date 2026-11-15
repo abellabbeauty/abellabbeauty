@@ -755,6 +755,8 @@ footer{background:linear-gradient(90deg,#f7d2d6,#f9dce0);padding:24px 0}
 #bookingView .summary{order:0;position:static;top:auto;width:100%}
 .compact-contact .instagram-link{display:inline-flex;align-items:center;gap:7px}
 .instagram-icon{flex:0 0 19px;width:19px;height:19px}
+.addon .addon-description{display:block;font-size:.7rem;line-height:1.4;margin:2px 0 3px;color:var(--muted)}
+#fullGrid .pick:disabled{opacity:.45;cursor:default}
 </style>
 </head>
 <body>
@@ -938,7 +940,8 @@ const full={
   ombre:{label:"Ombré",price:10,time:15},
   marble:{label:"Marble",price:10,time:15},
   art3d:{label:"3D",price:10,time:15},
-  chrome:{label:"Chrome",price:10,time:15}
+  chrome:{label:"Chrome",price:10,time:15},
+  polkaDots:{label:"Polka Dots",price:10,time:15}
 };
 const addons={
   french:{label:"French",price:2,time:2},
@@ -948,9 +951,10 @@ const addons={
   chrome:{label:"Chrome",price:2,time:2},
   charms:{label:"Charms",price:2,time:2},
   rhinestones:{label:"Rhinestones",price:2,time:2},
-  art3d:{label:"3D Nail Art",price:3,time:2},
-  simple:{label:"Simple Nail Art",price:2,time:2},
-  complex:{label:"Complex Nail Art",price:5,time:5}
+  art3d:{label:"3D Nail Art",price:3,time:2,description:"includes only 3D line art"},
+  simple:{label:"Simple Nail Art",price:2,time:2,description:"e.g. hand drawn bow or flower"},
+  complex:{label:"Complex Nail Art",price:5,time:5,description:"e.g. sculpted 3d flower"},
+  polkaDots:{label:"Polka Dots",price:2,time:2}
 };
 let bookingRequest=null;
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
@@ -1037,12 +1041,21 @@ async function fetchOverrides(rangeStart,rangeEnd){
   })||[];
 }
 
+function selectedFullDesigns(){return state.full==="none"?[]:state.full.split(",");}
+function toggleFullDesign(key){
+  let selected=selectedFullDesigns();
+  if(key==="none")selected=[];
+  else if(selected.includes(key))selected=selected.filter(k=>k!==key);
+  else if(selected.length<2)selected.push(key);
+  state.full=selected.length?selected.sort().join(","):"none";
+  resetSlot();sync();
+}
 function calc(){
   if(!state.service)return{price:0,time:0,service:"—"};
   const s=services[state.service];
   let p=s.price,t=s.time;
   if(s.art){
-    p+=full[state.full].price;t+=full[state.full].time;
+    selectedFullDesigns().forEach(k=>{p+=full[k].price;t+=full[k].time});
     Object.entries(state.addons).forEach(([k,q])=>{p+=addons[k].price*q;t+=addons[k].time*q});
   }
   if(!s.removalOnly){
@@ -1073,7 +1086,7 @@ function renderBase(){
   Object.entries(full).forEach(([k,v])=>{
     const b=document.createElement("button");
     b.className="pick"; b.type="button"; b.dataset.k=k; b.textContent=v.label;
-    b.onclick=()=>{state.full=k;resetSlot();sync()};
+    b.onclick=()=>toggleFullDesign(k);
     fg.appendChild(b);
   });
 
@@ -1082,7 +1095,7 @@ function renderBase(){
   Object.entries(addons).forEach(([k,a])=>{
     const r=document.createElement("div");
     r.className="addon";
-    r.innerHTML=`<div><strong>${a.label}</strong><small>${money(a.price)}/nail · +${a.time} min/nail</small></div>
+    r.innerHTML=`<div><strong>${a.label}</strong>${a.description?`<small class="addon-description">${esc(a.description)}</small>`:""}<small>${money(a.price)}/nail · +${a.time} min/nail</small></div>
       <div class="qty"><button type="button" onclick="qty('${k}',-1)">−</button><output id="q-${k}">0</output><button type="button" onclick="qty('${k}',1)">+</button></div>`;
     al.appendChild(r);
   });
@@ -1106,7 +1119,12 @@ function qty(k,d){
 function resetSlot(){state.date=null;state.time=null}
 function sync(){
   document.querySelectorAll('input[name="mainService"]').forEach(x=>x.checked=(x.value===state.service));
-  document.querySelectorAll("#fullGrid .pick").forEach(x=>x.classList.toggle("selected",x.dataset.k===state.full));
+  document.querySelectorAll("#fullGrid .pick").forEach(x=>{
+    const selected=selectedFullDesigns(),active=x.dataset.k==="none"?!selected.length:selected.includes(x.dataset.k);
+    x.classList.toggle("selected",active);
+    x.setAttribute("aria-pressed",String(active));
+    x.disabled=x.dataset.k!=="none"&&!active&&selected.length>=2;
+  });
   Object.keys(addons).forEach(k=>{
     const el=document.getElementById("q-"+k);
     if(el)el.textContent=state.addons[k];
@@ -1357,7 +1375,7 @@ function review(){
   }
 
   let extras=[];
-  if(state.full!=="none")extras.push(full[state.full].label+" — full set");
+  selectedFullDesigns().forEach(k=>extras.push(full[k].label+" — full set"));
   Object.entries(state.addons).forEach(([k,q])=>{if(q)extras.push(`${addons[k].label} × ${q}`)});
   const rem=document.getElementById("removal").value;
   if(rem==="own")extras.push("abellabbeauty soak-off");
@@ -1384,7 +1402,7 @@ function review(){
 function buildServiceDetails(){
   const c=calc();
   let extras=[];
-  if(state.full!=="none")extras.push({type:"full_set_design",name:full[state.full].label});
+  selectedFullDesigns().forEach(k=>extras.push({type:"full_set_design",name:full[k].label}));
   Object.entries(state.addons).forEach(([k,q])=>{
     if(q)extras.push({type:"per_nail",name:addons[k].label,quantity:q});
   });
@@ -1412,7 +1430,7 @@ async function saveBooking(){
   }
 
   let extras=[];
-  if(state.full!=="none")extras.push({type:"full_set_design",name:full[state.full].label});
+  selectedFullDesigns().forEach(k=>extras.push({type:"full_set_design",name:full[k].label}));
   Object.entries(state.addons).forEach(([k,q])=>{
     if(q)extras.push({type:"per_nail",name:addons[k].label,quantity:q});
   });
