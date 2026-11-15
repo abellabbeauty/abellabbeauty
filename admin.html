@@ -554,8 +554,9 @@ function openBooking(id){
 
 
 
-    <div class="compactCard"><h3>Confirmation email</h3><p>${esc(b.confirmation_email_status||"Not sent")}</p>
-      ${b.confirmation_email_status!=="sent"&&b.booking_status==="confirmed"?`<button class="btn small" onclick="retryEmail('${b.id}')">Resend confirmation</button>`:""}
+    <div class="compactCard"><h3>${b.booking_status==="cancelled"?"Cancellation email":"Confirmation email"}</h3><p>${esc((b.booking_status==="cancelled"?b.cancellation_email_status:b.confirmation_email_status)||"Not sent")}</p>
+      <p>Emails go to the client, with a copy to abellaattoo@gmail.com.</p>
+      ${["confirmed","cancelled"].includes(b.booking_status)&&(b.booking_status==="cancelled"?b.cancellation_email_status:b.confirmation_email_status)!=="sent"?`<button class="btn small" onclick="retryEmail('${b.id}')">Retry email</button>`:""}
     </div>
     <div class="contactGrid">
       <div><span>Email</span><strong>${esc(b.client_email)}</strong></div>
@@ -582,10 +583,27 @@ function openBooking(id){
 }
 async function retryEmail(id){
   try{const r=await api("/functions/v1/create-booking",{method:"POST",body:JSON.stringify({action:"retry_email",booking_id:id})});
-  if(r.confirmation_email_status!=="sent")throw new Error("Email could not be sent. Please check the email provider configuration.");
+  if(r.notification_email_status!=="sent")throw new Error("Email could not be sent. Please check the email provider configuration.");
   await loadWeek();openBooking(id);}catch(err){alert(err.message)}
 }
-async function updateBooking(id,patch){try{await api(`/rest/v1/bookings?id=eq.${id}`,{method:"PATCH",headers:{Prefer:"return=minimal"},body:JSON.stringify(patch)});closeDrawer();await loadWeek()}catch(err){alert(err.message)}}
+let updatingBooking=false;
+async function updateBooking(id,patch){
+ if(updatingBooking)return;
+ updatingBooking=true;
+ try{
+  let notification;
+  if(["confirmed","cancelled"].includes(patch.booking_status)){
+   notification=await api("/functions/v1/create-booking",{method:"POST",body:JSON.stringify({action:"update_booking_status",booking_id:id,booking_status:patch.booking_status})});
+  }else{
+   await api(`/rest/v1/bookings?id=eq.${id}`,{method:"PATCH",headers:{Prefer:"return=minimal"},body:JSON.stringify(patch)});
+  }
+  closeDrawer();await loadWeek();
+  if(notification&&notification.notification_email_status!=="sent"){
+   openBooking(id);alert("The booking was updated, but the email could not be sent. Please use Retry email.");
+  }
+ }catch(err){alert(err.message)}finally{updatingBooking=false}
+}
+
 window.addEventListener("resize",()=>{const size=parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--slot"));if(size!==SLOT_PX){SLOT_PX=size;if(accessToken)renderAll();}});
 if(accessToken)showApp();
 </script>
