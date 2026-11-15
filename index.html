@@ -807,7 +807,8 @@ footer{background:linear-gradient(90deg,#f7d2d6,#f9dce0);padding:24px 0}
 <div id="serviceOptions" class="option-grid">
   <label class="service-choice"><input type="radio" name="mainService" value="biabNatural"><span class="option"><strong>BIAB — Full Set Overlay</strong><small>$60 · 1 hr 10 min</small></span></label>
   <label class="service-choice"><input type="radio" name="mainService" value="biabTips"><span class="option"><strong>BIAB — Full Set With Tips</strong><small>$70 · 1 hr 25 min</small></span></label>
-  <label class="service-choice"><input type="radio" name="mainService" value="biabInfill"><span class="option"><strong>BIAB — Infill</strong><small>$55 · 1 hr 10 min</small></span></label>
+  <label class="service-choice"><input type="radio" name="mainService" value="biabInfill"><span class="option"><strong>BIAB — Infill (Short/Medium Length)</strong><small>$55 · 1 hr 10 min</small></span></label>
+  <label class="service-choice"><input type="radio" name="mainService" value="biabInfillLong"><span class="option"><strong>BIAB — Infill (Long/Extra Long Length)</strong><small>$60 · 1 hr 10 min</small></span></label>
   <label class="service-choice"><input type="radio" name="mainService" value="shellac"><span class="option"><strong>Shellac Manicure</strong><small>$35 · 40 min</small></span></label>
   <label class="service-choice"><input type="radio" name="mainService" value="soakoff"><span class="option"><strong>Soak Off</strong><small>$25 · 40 min</small></span></label>
   <label class="service-choice"><input type="radio" name="mainService" value="foreignSoakoff"><span class="option"><strong>Foreign Soak Off</strong><small>$30 · 40 min</small></span></label>
@@ -925,7 +926,8 @@ function sydneyDayRange(dateKey){
 const services={
   biabNatural:{label:"BIAB — Full Set Overlay",price:60,time:70,art:true},
   biabTips:{label:"BIAB — Full Set With Tips",price:70,time:85,art:true},
-  biabInfill:{label:"BIAB — Infill",price:55,time:70,art:true},
+  biabInfill:{label:"BIAB — Infill (Short/Medium Length)",price:55,time:70,art:true},
+  biabInfillLong:{label:"BIAB — Infill (Long/Extra Long Length)",price:60,time:70,art:true},
   shellac:{label:"Shellac Manicure",price:35,time:40},
   soakoff:{label:"Soak Off",price:25,time:40,removalOnly:true},
   foreignSoakoff:{label:"Foreign Soak Off",price:30,time:40,removalOnly:true}
