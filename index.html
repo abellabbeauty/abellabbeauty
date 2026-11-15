@@ -1165,37 +1165,43 @@ async function renderDates(){
   }
   if(!shown)g.innerHTML='<div class="notice" style="grid-column:1/-1">No available dates are currently open in the next 8 weeks.</div>';
 }
-// Offer only the earliest fitting gap, using exact appointment/buffer boundaries.
-function earliestPackedStart(windows,busy,durationMs,earliestMs,bufferMs=5*60000){
+// Space options by the full selected duration plus buffer; restart after real busy periods.
+function spacedAppointmentStarts(windows,busy,durationMs,earliestMs,bufferMs=5*60000){
+  if(!(durationMs>0))return [];
   const periods=busy.filter(p=>p.end>p.start).slice().sort((a,b)=>a.start-b.start);
+  const starts=[];
   for(const w of windows.slice().sort((a,b)=>a.start-b.start)){
     let candidate=Math.ceil(Math.max(w.start,earliestMs)/60000)*60000;
-    for(const p of periods){
-      if(p.end<=candidate)continue;
-      if(p.start>=candidate+durationMs+bufferMs)break;
-      candidate=Math.ceil(p.end/60000)*60000;
+    while(candidate+durationMs<=w.end){
+      for(const p of periods){
+        if(p.end<=candidate)continue;
+        if(p.start>=candidate+durationMs+bufferMs)break;
+        candidate=Math.ceil(p.end/60000)*60000;
+      }
+      if(candidate+durationMs>w.end)break;
+      starts.push(candidate);
+      candidate+=durationMs+bufferMs;
     }
-    if(candidate+durationMs<=w.end)return candidate;
   }
-  return null;
+  return [...new Set(starts)].sort((a,b)=>a-b);
 }
-function packedTimeForDate(dateKey,overrides,busy,duration,earliest){
+function spacedTimesForDate(dateKey,overrides,busy,duration,earliest){
   const day=sydneyDayRange(dateKey);
   const windows=windowsFromOverrides(dateKey,overrides).map(w=>({
     start:new Date(sydneyLocalToISO(dateKey,ctime(w.start))).getTime(),
     end:w.end===1440?new Date(day.end).getTime():new Date(sydneyLocalToISO(dateKey,ctime(w.end))).getTime()
   }));
   const periods=busy.map(p=>({start:new Date(p.start_at).getTime(),end:new Date(p.end_at).getTime()}));
-  const start=earliestPackedStart(windows,periods,duration*60000,earliest.getTime());
-  return start===null?null:ctime(localMinutesFromISO(new Date(start).toISOString()));
+  return spacedAppointmentStarts(windows,periods,duration*60000,earliest.getTime())
+    .map(start=>ctime(localMinutesFromISO(new Date(start).toISOString())));
 }
-async function currentPackedTime(dateKey,duration){
+async function currentSpacedTimes(dateKey,duration){
   const range=sydneyDayRange(dateKey);
   const [busy,overrides]=await Promise.all([
     supabaseRpc("get_busy_times",{range_start:range.start,range_end:range.end}),
     fetchOverrides(range.start,range.end)
   ]);
-  return packedTimeForDate(dateKey,overrides||[],busy||[],duration,new Date(Date.now()+12*3600000));
+  return spacedTimesForDate(dateKey,overrides||[],busy||[],duration,new Date(Date.now()+12*3600000));
 }
 
 async function renderTimes(){
@@ -1229,8 +1235,7 @@ async function renderTimes(){
 
   if(state.date!==selectedDate||calc().time!==c.time)return;
 
-  const nextTime=packedTimeForDate(selectedDate,overrides,busy,c.time,earliest);
-  const unique=nextTime?[nextTime]:[];
+  const unique=spacedTimesForDate(selectedDate,overrides,busy,c.time,earliest);
   if(state.time&&!unique.includes(state.time)){
     state.time=null;
     document.getElementById("reviewBox").classList.add("hidden");
@@ -1423,14 +1428,14 @@ async function saveBooking(){
 
   try{
     const chosenDate=state.date,chosenTime=state.time,chosenDuration=c.time;
-    const nextTime=await currentPackedTime(chosenDate,chosenDuration);
+    const availableTimes=await currentSpacedTimes(chosenDate,chosenDuration);
     if(state.date!==chosenDate||state.time!==chosenTime||calc().time!==chosenDuration){
       throw new Error("Your choices changed. Please review your booking again.");
     }
-    if(nextTime!==chosenTime){
+    if(!availableTimes.includes(chosenTime)){
       state.time=null;
       renderTimes();summary();
-      throw new Error("Availability has changed. Please choose the next available time and review your booking again.");
+      throw new Error("Availability has changed. Please choose an available time and review your booking again.");
     }
     const payload={
       client_name:document.getElementById("name").value.trim(),
