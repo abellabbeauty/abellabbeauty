@@ -1185,43 +1185,53 @@ async function renderDates(){
   }
   if(!shown)g.innerHTML='<div class="notice" style="grid-column:1/-1">No available dates are currently open in the next 8 weeks.</div>';
 }
-// Space options by the full selected duration plus buffer; restart after real busy periods.
-function spacedAppointmentStarts(windows,busy,durationMs,earliestMs,bufferMs=5*60000){
+// Space choices by appointment length and buffer, anchoring the final option at closing.
+function strategicAppointmentStarts(windows,busy,durationMs,earliestMs,bufferMs=5*60000){
   if(!(durationMs>0))return [];
+  const minute=60000,step=durationMs+bufferMs;
   const periods=busy.filter(p=>p.end>p.start).slice().sort((a,b)=>a.start-b.start);
   const starts=[];
   for(const w of windows.slice().sort((a,b)=>a.start-b.start)){
-    let candidate=Math.ceil(Math.max(w.start,earliestMs)/60000)*60000;
-    while(candidate+durationMs<=w.end){
-      for(const p of periods){
-        if(p.end<=candidate)continue;
-        if(p.start>=candidate+durationMs+bufferMs)break;
-        candidate=Math.ceil(p.end/60000)*60000;
-      }
-      if(candidate+durationMs>w.end)break;
-      starts.push(candidate);
-      candidate+=durationMs+bufferMs;
+    const gaps=[];let cursor=w.start;
+    for(const p of periods){
+      if(p.end<=cursor)continue;
+      if(p.start>w.end)break;
+      if(p.start>cursor)gaps.push({start:cursor,end:Math.min(p.start,w.end),beforeBusy:true});
+      cursor=Math.max(cursor,p.end);
+      if(cursor>=w.end)break;
+    }
+    if(cursor<w.end)gaps.push({start:cursor,end:w.end,beforeBusy:false});
+    for(const gap of gaps){
+      const first=Math.ceil(Math.max(gap.start,earliestMs)/minute)*minute;
+      const nextBusy=periods.find(p=>p.start>=gap.end);
+      const last=Math.floor(Math.min(gap.end-durationMs-(gap.beforeBusy?bufferMs:0),nextBusy?nextBusy.start-durationMs-bufferMs:Infinity)/minute)*minute;
+      if(last<first)continue;
+      const choices=[];
+      for(let start=first;start<=last;start+=step)choices.push(start);
+      // Replace a nearby earlier option with the latest start; do not offer both.
+      choices[choices.length-1]=last;
+      starts.push(...choices);
     }
   }
   return [...new Set(starts)].sort((a,b)=>a-b);
 }
-function spacedTimesForDate(dateKey,overrides,busy,duration,earliest){
+function availableTimesForDate(dateKey,overrides,busy,duration,earliest){
   const day=sydneyDayRange(dateKey);
   const windows=windowsFromOverrides(dateKey,overrides).map(w=>({
     start:new Date(sydneyLocalToISO(dateKey,ctime(w.start))).getTime(),
     end:w.end===1440?new Date(day.end).getTime():new Date(sydneyLocalToISO(dateKey,ctime(w.end))).getTime()
   }));
-  const periods=busy.map(p=>({start:new Date(p.start_at).getTime(),end:new Date(p.end_at).getTime()}));
-  return spacedAppointmentStarts(windows,periods,duration*60000,earliest.getTime())
+  const periods=[...busy,...overrides.filter(p=>p.override_type==="closed")].map(p=>({start:new Date(p.start_at).getTime(),end:new Date(p.end_at).getTime()}));
+  return strategicAppointmentStarts(windows,periods,duration*60000,earliest.getTime())
     .map(start=>ctime(localMinutesFromISO(new Date(start).toISOString())));
 }
-async function currentSpacedTimes(dateKey,duration){
+async function currentAvailableTimes(dateKey,duration){
   const range=sydneyDayRange(dateKey);
   const [busy,overrides]=await Promise.all([
     supabaseRpc("get_busy_times",{range_start:range.start,range_end:range.end}),
     fetchOverrides(range.start,range.end)
   ]);
-  return spacedTimesForDate(dateKey,overrides||[],busy||[],duration,new Date(Date.now()+12*3600000));
+  return availableTimesForDate(dateKey,overrides||[],busy||[],duration,new Date(Date.now()+12*3600000));
 }
 
 async function renderTimes(){
@@ -1255,7 +1265,7 @@ async function renderTimes(){
 
   if(state.date!==selectedDate||calc().time!==c.time)return;
 
-  const unique=spacedTimesForDate(selectedDate,overrides,busy,c.time,earliest);
+  const unique=availableTimesForDate(selectedDate,overrides,busy,c.time,earliest);
   if(state.time&&!unique.includes(state.time)){
     state.time=null;
     document.getElementById("reviewBox").classList.add("hidden");
@@ -1448,7 +1458,7 @@ async function saveBooking(){
 
   try{
     const chosenDate=state.date,chosenTime=state.time,chosenDuration=c.time;
-    const availableTimes=await currentSpacedTimes(chosenDate,chosenDuration);
+    const availableTimes=await currentAvailableTimes(chosenDate,chosenDuration);
     if(state.date!==chosenDate||state.time!==chosenTime||calc().time!==chosenDuration){
       throw new Error("Your choices changed. Please review your booking again.");
     }
