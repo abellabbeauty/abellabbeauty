@@ -1,4 +1,10 @@
 BEGIN;
+ALTER TABLE public.bookings
+ ADD COLUMN IF NOT EXISTS reschedule_revision uuid,
+ ADD COLUMN IF NOT EXISTS reschedule_previous_start_at timestamptz,
+ ADD COLUMN IF NOT EXISTS reschedule_email_status text NOT NULL DEFAULT 'pending',
+ ADD COLUMN IF NOT EXISTS reschedule_email_sent_at timestamptz,
+ ADD COLUMN IF NOT EXISTS reschedule_email_id text;
 CREATE OR REPLACE FUNCTION public.admin_reschedule_booking(p_booking_id uuid,p_start_at timestamptz,p_original_start_at timestamptz)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $function$
 DECLARE
@@ -42,7 +48,10 @@ BEGIN
     AND tstzrange(other.start_at,coalesce(other.blocked_until,other.end_at),'[)')&&tstzrange(p_start_at,blocked,'[)')) THEN
     RAISE EXCEPTION 'That time overlaps another appointment, including its buffer.';
   END IF;
-  UPDATE public.bookings SET start_at=p_start_at,end_at=finish,blocked_until=blocked WHERE id=b.id RETURNING * INTO b;
+  UPDATE public.bookings SET start_at=p_start_at,end_at=finish,blocked_until=blocked,
+    reschedule_previous_start_at=b.start_at,reschedule_revision=pg_catalog.gen_random_uuid(),
+    reschedule_email_status='pending',reschedule_email_sent_at=NULL,reschedule_email_id=NULL
+  WHERE id=b.id RETURNING * INTO b;
   RETURN to_jsonb(b);
 EXCEPTION WHEN exclusion_violation THEN
   RAISE EXCEPTION 'That time overlaps another appointment. Refresh and choose another time.';

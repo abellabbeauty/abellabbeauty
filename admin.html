@@ -599,9 +599,9 @@ function openBooking(id){
 
 
 
-    <div class="compactCard"><h3>${b.booking_status==="cancelled"?"Cancellation email":"Confirmation email"}</h3><p>${esc((b.booking_status==="cancelled"?b.cancellation_email_status:b.confirmation_email_status)||"Not sent")}</p>
+    <div class="compactCard"><h3>${b.booking_status==="cancelled"?"Cancellation email":b.reschedule_revision?"Appointment update email":"Confirmation email"}</h3><p>${esc((b.booking_status==="cancelled"?b.cancellation_email_status:b.reschedule_revision?b.reschedule_email_status:b.confirmation_email_status)||"Not sent")}</p>
       <p>Emails go to the client, with a copy to abellaattoo@gmail.com.</p>
-      ${["confirmed","cancelled"].includes(b.booking_status)&&(b.booking_status==="cancelled"?b.cancellation_email_status:b.confirmation_email_status)!=="sent"?`<button class="btn small" onclick="retryEmail('${b.id}')">Retry email</button>`:""}
+      ${(["confirmed","cancelled"].includes(b.booking_status)||(b.booking_status==="pending"&&b.reschedule_revision))&&(b.booking_status==="cancelled"?b.cancellation_email_status:b.reschedule_revision?b.reschedule_email_status:b.confirmation_email_status)!=="sent"?`<button class="btn small" onclick="retryEmail('${b.id}')">Retry email</button>`:""}
     </div>
     <div class="contactGrid">
       <div><span>Email</span><strong>${esc(b.client_email)}</strong></div>
@@ -618,7 +618,7 @@ function openBooking(id){
         <div class="field"><label for="moveTime">Start time</label><input id="moveTime" type="time" step="60" value="${sydneyParts(b.start_at).hour}:${sydneyParts(b.start_at).minute}" onchange="previewBookingMove('${b.id}')"></div>
       </div>
       <p id="movePreview" aria-live="polite">${Math.round((new Date(b.end_at)-new Date(b.start_at))/60000)} minutes · ${Math.round((new Date(b.blocked_until||b.end_at)-new Date(b.end_at))/60000)}-minute buffer</p>
-      <p class="moveHelp">Choose an open time. Let your client know about the new time.</p>
+      <p class="moveHelp">Choose an open time. The client and abellaattoo@gmail.com will receive the updated appointment details.</p>
       <p id="moveError" class="moveError" role="alert"></p>
       <button id="moveSave" type="button" class="btn" onclick="moveBooking('${b.id}')">Move appointment</button>
     </div>`:""}
@@ -664,11 +664,15 @@ async function moveBooking(id){
   const move=bookingMoveDetails(b);
   if(new Date(move.start).getTime()===new Date(b.start_at).getTime()){error.textContent="Choose a different date or time first.";return;}
   movingBooking=true;button.disabled=true;button.textContent="Moving…";
-  await api("/rest/v1/rpc/admin_reschedule_booking",{method:"POST",body:JSON.stringify({p_booking_id:id,p_start_at:move.start,p_original_start_at:b.start_at})});
+  const notification=await api("/functions/v1/create-booking",{method:"POST",body:JSON.stringify({action:"reschedule_booking",booking_id:id,start_at:move.start,original_start_at:b.start_at})});
   moved=true;
   const [year,month,day]=move.date.split("-").map(Number);
   weekStart=startOfWeek(new Date(year,month-1,day));selectedDateKey=move.date;
   closeDrawer();await loadWeek();openBooking(id);
+  if(notification.notification_email_status!=="sent"){
+   const message=document.getElementById("moveError");
+   if(message)message.textContent="Appointment moved, but the update email could not be sent. Use Retry email above.";
+  }
  }catch(err){
   if(moved){closeDrawer();alert("The appointment was moved. Refresh the calendar to see it.");}
   else error.textContent=err.message;
