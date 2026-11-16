@@ -221,6 +221,9 @@ main{width:min(1180px,calc(100% - 16px));margin:14px auto 40px}
 .currentHours{margin-top:12px;line-height:1.6;background:#fae8ed}
 .diaryHeadSub{max-width:100%;line-height:1.5}
 @media(max-width:700px){.hoursCard{padding:11px}.hoursCardHead>strong{font-size:.82rem}.exactHours>strong{font-size:.92rem}.diaryHead{gap:8px}.diaryHead>div{min-width:0;flex:1}.addBtn{flex-shrink:0}}
+.moveFields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.moveFields .field{min-width:0;margin:8px 0}.moveFields input{min-width:0;width:100%;box-sizing:border-box}
+.moveHelp{font-size:.75rem;color:var(--muted)}.moveError{color:var(--red);font-size:.8rem}.moveError:empty{display:none}
 </style>
 </head>
 <body>
@@ -566,6 +569,18 @@ function openBooking(id){
     ${addOns?`<div class="compactCard"><h3>Add-ons</h3><p>${addOns}</p></div>`:""}
     ${b.notes?`<div class="compactCard"><h3>Notes</h3><p>${esc(b.notes)}</p></div>`:""}
 
+    ${["pending","confirmed"].includes(b.booking_status)?`
+    <div class="compactCard"><h3>Move appointment</h3>
+      <div class="moveFields">
+        <div class="field"><label for="moveDate">New date</label><input id="moveDate" type="date" value="${bookingDateKey(b.start_at)}" onchange="previewBookingMove('${b.id}')"></div>
+        <div class="field"><label for="moveTime">Start time</label><input id="moveTime" type="time" step="60" value="${sydneyParts(b.start_at).hour}:${sydneyParts(b.start_at).minute}" onchange="previewBookingMove('${b.id}')"></div>
+      </div>
+      <p id="movePreview" aria-live="polite">${Math.round((new Date(b.end_at)-new Date(b.start_at))/60000)} minutes · ${Math.round((new Date(b.blocked_until||b.end_at)-new Date(b.end_at))/60000)}-minute buffer</p>
+      <p class="moveHelp">Choose an open time. Let your client know about the new time.</p>
+      <p id="moveError" class="moveError" role="alert"></p>
+      <button id="moveSave" type="button" class="btn" onclick="moveBooking('${b.id}')">Move appointment</button>
+    </div>`:""}
+
     <div class="sectiontitle">Booking status</div>
     <div class="actions">
       <button class="btn small" onclick="updateBooking('${b.id}',{booking_status:'confirmed'})">Confirm</button>
@@ -581,6 +596,42 @@ function openBooking(id){
     </div>
   `);
 }
+function bookingMoveDetails(b){
+ const date=document.getElementById("moveDate").value,time=document.getElementById("moveTime").value;
+ if(!date||!/^\d{2}:\d{2}$/.test(time))throw new Error("Choose a new date and start time.");
+ const start=sydneyLocalToISO(date,time),duration=new Date(b.end_at)-new Date(b.start_at);
+ const parts=sydneyParts(start);
+ if(bookingDateKey(start)!==date||`${parts.hour}:${parts.minute}`!==time)throw new Error("That local time is not available. Choose another time.");
+ return {date,start,end:new Date(new Date(start).getTime()+duration).toISOString()};
+}
+function previewBookingMove(id){
+ const b=bookings.find(x=>x.id===id);if(!b)return;
+ document.getElementById("moveError").textContent="";
+ try{const move=bookingMoveDetails(b);
+ document.getElementById("movePreview").textContent=`${bookingTime(move.start)} – ${bookingTime(move.end)} · full appointment and buffer kept`;
+ }catch(err){document.getElementById("movePreview").textContent=err.message}
+}
+let movingBooking=false;
+async function moveBooking(id){
+ if(movingBooking||updatingBooking)return;
+ const b=bookings.find(x=>x.id===id);if(!b)return;
+ const button=document.getElementById("moveSave"),error=document.getElementById("moveError");
+ error.textContent="";
+ let moved=false;
+ try{
+  const move=bookingMoveDetails(b);
+  if(new Date(move.start).getTime()===new Date(b.start_at).getTime()){error.textContent="Choose a different date or time first.";return;}
+  movingBooking=true;button.disabled=true;button.textContent="Moving…";
+  await api("/rest/v1/rpc/admin_reschedule_booking",{method:"POST",body:JSON.stringify({p_booking_id:id,p_start_at:move.start,p_original_start_at:b.start_at})});
+  moved=true;
+  const [year,month,day]=move.date.split("-").map(Number);
+  weekStart=startOfWeek(new Date(year,month-1,day));selectedDateKey=move.date;
+  closeDrawer();await loadWeek();openBooking(id);
+ }catch(err){
+  if(moved){closeDrawer();alert("The appointment was moved. Refresh the calendar to see it.");}
+  else error.textContent=err.message;
+ }finally{movingBooking=false;button.disabled=false;button.textContent="Move appointment"}
+}
 async function retryEmail(id){
   try{const r=await api("/functions/v1/create-booking",{method:"POST",body:JSON.stringify({action:"retry_email",booking_id:id})});
   if(r.notification_email_status!=="sent")throw new Error("Email could not be sent. Please check the email provider configuration.");
@@ -588,7 +639,7 @@ async function retryEmail(id){
 }
 let updatingBooking=false;
 async function updateBooking(id,patch){
- if(updatingBooking)return;
+ if(updatingBooking||movingBooking)return;
  updatingBooking=true;
  try{
   let notification;
